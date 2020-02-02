@@ -30,48 +30,22 @@
                 </template>
                 <!--******* Actions ***************-->
                 <template v-slot:cell(Actions)="row">
-                    <b-button size="sm" @click="row.toggleDetails" class="mr-2">Actions</b-button>
+                    <b-button size="sm" class="btn btn-primary mr-2" style="width:70px"
+                              @click="openModal($event.target,'u',row.item,row.index)">Edit
+                    </b-button>
+                    <b-button size="sm" @click="remove(row.item,row.index)" style="width:70px"
+                              class="btn btn-danger mr-2">Remove</b-button>
+
                 </template>
                 <!--******* Row detail ***************-->
                 <template v-slot:row-details="row">
                     <div class="container">
                         <div class="row justify-content-center mb-3 ">
-                            <div class="col-12 col-md-8 bg-light rounded">
-                                <h3 class="text-center my-3 text-muted border-bottom pb-3">Detail information</h3>
-                                <div class="row">
-                                    <!--******************************-->
-                                    <div class="col-6 text-right label_class">ID :</div>
-                                    <div class="col-6 text-left value_class">{{ row.item.id }}</div>
-                                    <!--******************************-->
-                                    <div class="col-6 text-right label_class">Full name :</div>
-                                    <div class="col-6 text-left value_class">{{ row.item.full_name }}</div>
-                                    <!--******************************-->
-                                    <div class="col-6 text-right label_class">Mobile :</div>
-                                    <div class="col-6 text-left value_class">{{ row.item.mobile }}</div>
-                                    <!--******************************-->
-                                    <div class="col-6 text-right label_class">Email :</div>
-                                    <div class="col-6 text-left value_class">{{ row.item.email }}</div>
-                                    <!--******************************-->
-                                    <div class="col-6 text-right label_class">Target Country :</div>
-                                    <div class="col-6 text-left value_class">{{ row.item.country }}</div>
-                                    <!--******************************-->
-                                    <div class="col-6 text-right label_class">Owner ID :</div>
-                                    <div class="col-6 text-left value_class">{{ row.item.owner_id }}</div>
-                                    <!--******************************-->
-                                    <div class="col-6 text-right label_class">Followup date :</div>
-                                    <div class="col-6 text-left value_class">{{ row.item.date_followUp }}</div>
-                                    <!--******************************-->
-                                    <div class="col-6 text-right label_class">Created at :</div>
-                                    <div class="col-6 text-left value_class">{{ row.item.created_at }}</div>
-                                    <!--******************************-->
-                                    <div class="col-6 text-right label_class">Updated at :</div>
-                                    <div class="col-6 text-left value_class">{{ row.item.updated_at }}</div>
-                                    <!--******************************-->
-                                </div>
-                            </div>
                             <div class="col-12 col-md-8 mt-3 text-center">
-                                <button class="btn btn-danger w-25">Remove</button>
-                                <button class="btn btn-success w-25">Set status</button>
+                                <button class="btn btn-danger w-25" @click="remove(row.item,row.index)">Remove</button>
+                                <button class="btn btn-success w-25"
+                                        @click="openModal($event.target,'u',row.item,row.index)">Edit
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -90,6 +64,64 @@
             </b-col>
             <!--**************************-->
         </div>
+        <div class="col-12">
+            <button class="btn btn-success my-5" @click="openModal($event.target,'i')">Add new asset</button>
+        </div>
+        <!--**************************-->
+        <div>
+            <b-modal :id="get_asset_modal_id(0)" :title="modal.header" hide-footer size="md">
+                <form @submit.prevent="save_asset">
+                    <!--***********  Date Filter *************-->
+                    <!--******* asset_name *********-->
+                    <div class="form-row">
+                        <div class="form-group col-12">
+                            <label for="asset_name">Asset name:</label>
+                            <input type="text" required
+                                   class="form-control"
+                                   v-model="form.asset_name"
+                                   id="asset_name">
+                        </div>
+                    </div>
+                    <!--******* color *********-->
+                    <div class="form-row">
+                        <div class="form-group col-12">
+                            <label for="color">Asset color:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   v-model="form.color"
+                                   id="color">
+                        </div>
+                    </div>
+                    <!--******* spec *********-->
+                    <div class="form-row">
+                        <div class="form-group col-12">
+                            <label for="spec">Asset spec.:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   v-model="form.spec"
+                                   id="spec">
+                        </div>
+                    </div>
+                    <!--******* brand *********-->
+                    <div class="form-row">
+                        <div class="form-group col-12">
+                            <label for="brand">Asset brand:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   v-model="form.brand"
+                                   id="brand">
+                        </div>
+                    </div>
+                    <!--***********  Buttons *************-->
+                    <div class="row">
+                        <div class="col-6">
+                            <button class="btn btn-success d-flex ml-auto px-5">Save</button>
+                        </div>
+                    </div>
+                </form>
+            </b-modal>
+        </div>
+        <!--**************************-->
     </div>
 </template>
 
@@ -113,7 +145,18 @@
                     {key: 'brand', sortable: true, label: 'brand'},
                     'Actions',
                 ],
+                modal: {
+                    header: 'Asset',
+                },
                 selected_items: [],
+                form: {
+                    asset_name: '',
+                    color: '',
+                    spec: '',
+                    brand: '',
+                },
+                save_type: '',
+                selected: {item: null, index: null},
             }
         },
         /**********************************/
@@ -127,19 +170,82 @@
         /**********************************/
         mounted() {
             this.totalRows = this.information.length;
-            console.log(this.information);
+            // console.log(this.information);
         },
         /**********************************/
         methods: {
+            /***********************/
+            openModal(target, m_type, item = null, index = 0) {
+                // m_type = 'i' || 'u';
+                this.save_type = m_type;
+                if (m_type === 'i') {
+                    this.modal.header = 'Define a new asset';
+                    this.form = {
+                        asset_name: '',
+                        color: '',
+                        spec: '',
+                        brand: '',
+                    };
+                    this.selected = {item: null, index: null};
+                } else {
+                    this.modal.header = 'Edit asset';
+                    this.form = {
+                        asset_name: item.asset_name,
+                        color: item.color,
+                        spec: item.spec,
+                        brand: item.brand,
+                        id: item.id,
+                    };
+                    this.selected = {item: item, index: index};
+                }
+                this.$root.$emit('bv::show::modal', 'asset_modal_id', target);
+            },
+            /***********************/
             onRowSelected(item) {
                 this.selected_items = item;
                 this.$emit('select_rows', {item_length: this.selected_items.length, items: this.selected_items});
             },
+            /***********************/
             onFiltered(filteredItems) {
                 // Trigger pagination to update the number of buttons/pages due to filtering
                 this.totalRows = filteredItems.length;
                 this.currentPage = 1
             },
+            /***********************/
+            get_asset_modal_id(id = 0) {
+                if (id)
+                    return 'asset_modal_id_' + id;
+                else {
+                    return 'asset_modal_id';
+                }
+            },
+            /***********************/
+            save_asset() {
+                if (this.save_type === 'i') {
+                    let new_data = {
+                        id: 2,
+                        asset_name: this.form.asset_name,
+                        color: this.form.color,
+                        spec: this.form.spec,
+                        brand: this.form.brand,
+                        // owner_id: form.asset_name,
+                        // created_at: form.asset_name,
+                        // updated_at: form.asset_name,
+                    };
+                    this.information.push(new_data);
+                } else {
+                    this.information[this.selected.index].asset_name = this.form.asset_name;
+                    this.information[this.selected.index].color = this.form.color;
+                    this.information[this.selected.index].spec = this.form.spec;
+                    this.information[this.selected.index].brand = this.form.brand;
+                }
+                this.$root.$emit('bv::hide::modal', 'asset_modal_id');
+            },
+            /***********************/
+            remove(item, index) {
+                this.information.splice(index, 1);
+            },
+            /***********************/
         },
         /**********************************/
         watch: {

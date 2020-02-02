@@ -104,6 +104,38 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 /* harmony default export */ __webpack_exports__["default"] = ({
   name: "data_table",
 
@@ -136,7 +168,21 @@ __webpack_require__.r(__webpack_exports__);
         sortable: true,
         label: 'brand'
       }, 'Actions'],
-      selected_items: []
+      modal: {
+        header: 'Asset'
+      },
+      selected_items: [],
+      form: {
+        asset_name: '',
+        color: '',
+        spec: '',
+        brand: ''
+      },
+      save_type: '',
+      selected: {
+        item: null,
+        index: null
+      }
     };
   },
 
@@ -152,12 +198,49 @@ __webpack_require__.r(__webpack_exports__);
 
   /**********************************/
   mounted: function mounted() {
-    this.totalRows = this.information.length;
-    console.log(this.information);
+    this.totalRows = this.information.length; // console.log(this.information);
   },
 
   /**********************************/
   methods: {
+    /***********************/
+    openModal: function openModal(target, m_type) {
+      var item = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+      var index = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+      // m_type = 'i' || 'u';
+      this.save_type = m_type;
+
+      if (m_type === 'i') {
+        this.modal.header = 'Define a new asset';
+        this.form = {
+          asset_name: '',
+          color: '',
+          spec: '',
+          brand: ''
+        };
+        this.selected = {
+          item: null,
+          index: null
+        };
+      } else {
+        this.modal.header = 'Edit asset';
+        this.form = {
+          asset_name: item.asset_name,
+          color: item.color,
+          spec: item.spec,
+          brand: item.brand,
+          id: item.id
+        };
+        this.selected = {
+          item: item,
+          index: index
+        };
+      }
+
+      this.$root.$emit('bv::show::modal', 'asset_modal_id', target);
+    },
+
+    /***********************/
     onRowSelected: function onRowSelected(item) {
       this.selected_items = item;
       this.$emit('select_rows', {
@@ -165,11 +248,52 @@ __webpack_require__.r(__webpack_exports__);
         items: this.selected_items
       });
     },
+
+    /***********************/
     onFiltered: function onFiltered(filteredItems) {
       // Trigger pagination to update the number of buttons/pages due to filtering
       this.totalRows = filteredItems.length;
       this.currentPage = 1;
+    },
+
+    /***********************/
+    get_asset_modal_id: function get_asset_modal_id() {
+      var id = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+      if (id) return 'asset_modal_id_' + id;else {
+        return 'asset_modal_id';
+      }
+    },
+
+    /***********************/
+    save_asset: function save_asset() {
+      if (this.save_type === 'i') {
+        var new_data = {
+          id: 2,
+          asset_name: this.form.asset_name,
+          color: this.form.color,
+          spec: this.form.spec,
+          brand: this.form.brand // owner_id: form.asset_name,
+          // created_at: form.asset_name,
+          // updated_at: form.asset_name,
+
+        };
+        this.information.push(new_data);
+      } else {
+        this.information[this.selected.index].asset_name = this.form.asset_name;
+        this.information[this.selected.index].color = this.form.color;
+        this.information[this.selected.index].spec = this.form.spec;
+        this.information[this.selected.index].brand = this.form.brand;
+      }
+
+      this.$root.$emit('bv::hide::modal', 'asset_modal_id');
+    },
+
+    /***********************/
+    remove: function remove(item, index) {
+      this.information.splice(index, 1);
     }
+    /***********************/
+
   },
 
   /**********************************/
@@ -271,8 +395,8 @@ __webpack_require__.r(__webpack_exports__);
         /*2020-03-01 test_date=2020-02-02 12:00:00 */
         this.filtered_items = this.filtered_items.filter(function (item) {
           return item.created_at <= _this.filter.to_date + ' ' + '24:00:00';
-        });
-      console.log(this.filtered_items, this.filter); // this.update_table_caption();
+        }); // console.log(this.filtered_items, this.filter);
+      // this.update_table_caption();
     },
 
     /************************/
@@ -290,7 +414,7 @@ __webpack_require__.r(__webpack_exports__);
     /*****************/
     control_change: function control_change(val) {
       this.change_items = val;
-      this.can_change = val.item_length;
+      this.can_change = val.item_length; // console.log(val);
     },
 
     /*****************/
@@ -312,7 +436,7 @@ __webpack_require__.r(__webpack_exports__);
       data: null,
       method: 'get'
     }).then(function (res) {
-      console.log('get_users', res);
+      // console.log('get_users', res);
       _this2.information = res.data;
       _this2.filtered_items = res.data;
 
@@ -24225,11 +24349,36 @@ var render = function() {
                   _c(
                     "b-button",
                     {
-                      staticClass: "mr-2",
+                      staticClass: "btn btn-primary mr-2",
+                      staticStyle: { width: "70px" },
                       attrs: { size: "sm" },
-                      on: { click: row.toggleDetails }
+                      on: {
+                        click: function($event) {
+                          return _vm.openModal(
+                            $event.target,
+                            "u",
+                            row.item,
+                            row.index
+                          )
+                        }
+                      }
                     },
-                    [_vm._v("Actions")]
+                    [_vm._v("Edit\n                ")]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-button",
+                    {
+                      staticClass: "btn btn-danger mr-2",
+                      staticStyle: { width: "70px" },
+                      attrs: { size: "sm" },
+                      on: {
+                        click: function($event) {
+                          return _vm.remove(row.item, row.index)
+                        }
+                      }
+                    },
+                    [_vm._v("Remove")]
                   )
                 ]
               }
@@ -24245,143 +24394,37 @@ var render = function() {
                       [
                         _c(
                           "div",
-                          { staticClass: "col-12 col-md-8 bg-light rounded" },
-                          [
-                            _c(
-                              "h3",
-                              {
-                                staticClass:
-                                  "text-center my-3 text-muted border-bottom pb-3"
-                              },
-                              [_vm._v("Detail information")]
-                            ),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "row" }, [
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-right label_class" },
-                                [_vm._v("ID :")]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-left value_class" },
-                                [_vm._v(_vm._s(row.item.id))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-right label_class" },
-                                [_vm._v("Full name :")]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-left value_class" },
-                                [_vm._v(_vm._s(row.item.full_name))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-right label_class" },
-                                [_vm._v("Mobile :")]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-left value_class" },
-                                [_vm._v(_vm._s(row.item.mobile))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-right label_class" },
-                                [_vm._v("Email :")]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-left value_class" },
-                                [_vm._v(_vm._s(row.item.email))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-right label_class" },
-                                [_vm._v("Target Country :")]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-left value_class" },
-                                [_vm._v(_vm._s(row.item.country))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-right label_class" },
-                                [_vm._v("Owner ID :")]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-left value_class" },
-                                [_vm._v(_vm._s(row.item.owner_id))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-right label_class" },
-                                [_vm._v("Followup date :")]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-left value_class" },
-                                [_vm._v(_vm._s(row.item.date_followUp))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-right label_class" },
-                                [_vm._v("Created at :")]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-left value_class" },
-                                [_vm._v(_vm._s(row.item.created_at))]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-right label_class" },
-                                [_vm._v("Updated at :")]
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col-6 text-left value_class" },
-                                [_vm._v(_vm._s(row.item.updated_at))]
-                              )
-                            ])
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
                           { staticClass: "col-12 col-md-8 mt-3 text-center" },
                           [
                             _c(
                               "button",
-                              { staticClass: "btn btn-danger w-25" },
+                              {
+                                staticClass: "btn btn-danger w-25",
+                                on: {
+                                  click: function($event) {
+                                    return _vm.remove(row.item, row.index)
+                                  }
+                                }
+                              },
                               [_vm._v("Remove")]
                             ),
                             _vm._v(" "),
                             _c(
                               "button",
-                              { staticClass: "btn btn-success w-25" },
-                              [_vm._v("Set status")]
+                              {
+                                staticClass: "btn btn-success w-25",
+                                on: {
+                                  click: function($event) {
+                                    return _vm.openModal(
+                                      $event.target,
+                                      "u",
+                                      row.item,
+                                      row.index
+                                    )
+                                  }
+                                }
+                              },
+                              [_vm._v("Edit\n                            ")]
                             )
                           ]
                         )
@@ -24416,6 +24459,183 @@ var render = function() {
             })
           ],
           1
+        )
+      ],
+      1
+    ),
+    _vm._v(" "),
+    _c("div", { staticClass: "col-12" }, [
+      _c(
+        "button",
+        {
+          staticClass: "btn btn-success my-5",
+          on: {
+            click: function($event) {
+              return _vm.openModal($event.target, "i")
+            }
+          }
+        },
+        [_vm._v("Add new asset")]
+      )
+    ]),
+    _vm._v(" "),
+    _c(
+      "div",
+      [
+        _c(
+          "b-modal",
+          {
+            attrs: {
+              id: _vm.get_asset_modal_id(0),
+              title: _vm.modal.header,
+              "hide-footer": "",
+              size: "md"
+            }
+          },
+          [
+            _c(
+              "form",
+              {
+                on: {
+                  submit: function($event) {
+                    $event.preventDefault()
+                    return _vm.save_asset($event)
+                  }
+                }
+              },
+              [
+                _c("div", { staticClass: "form-row" }, [
+                  _c("div", { staticClass: "form-group col-12" }, [
+                    _c("label", { attrs: { for: "asset_name" } }, [
+                      _vm._v("Asset name:")
+                    ]),
+                    _vm._v(" "),
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.form.asset_name,
+                          expression: "form.asset_name"
+                        }
+                      ],
+                      staticClass: "form-control",
+                      attrs: { type: "text", required: "", id: "asset_name" },
+                      domProps: { value: _vm.form.asset_name },
+                      on: {
+                        input: function($event) {
+                          if ($event.target.composing) {
+                            return
+                          }
+                          _vm.$set(_vm.form, "asset_name", $event.target.value)
+                        }
+                      }
+                    })
+                  ])
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "form-row" }, [
+                  _c("div", { staticClass: "form-group col-12" }, [
+                    _c("label", { attrs: { for: "color" } }, [
+                      _vm._v("Asset color:")
+                    ]),
+                    _vm._v(" "),
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.form.color,
+                          expression: "form.color"
+                        }
+                      ],
+                      staticClass: "form-control",
+                      attrs: { type: "text", id: "color" },
+                      domProps: { value: _vm.form.color },
+                      on: {
+                        input: function($event) {
+                          if ($event.target.composing) {
+                            return
+                          }
+                          _vm.$set(_vm.form, "color", $event.target.value)
+                        }
+                      }
+                    })
+                  ])
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "form-row" }, [
+                  _c("div", { staticClass: "form-group col-12" }, [
+                    _c("label", { attrs: { for: "spec" } }, [
+                      _vm._v("Asset spec.:")
+                    ]),
+                    _vm._v(" "),
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.form.spec,
+                          expression: "form.spec"
+                        }
+                      ],
+                      staticClass: "form-control",
+                      attrs: { type: "text", id: "spec" },
+                      domProps: { value: _vm.form.spec },
+                      on: {
+                        input: function($event) {
+                          if ($event.target.composing) {
+                            return
+                          }
+                          _vm.$set(_vm.form, "spec", $event.target.value)
+                        }
+                      }
+                    })
+                  ])
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "form-row" }, [
+                  _c("div", { staticClass: "form-group col-12" }, [
+                    _c("label", { attrs: { for: "brand" } }, [
+                      _vm._v("Asset brand:")
+                    ]),
+                    _vm._v(" "),
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.form.brand,
+                          expression: "form.brand"
+                        }
+                      ],
+                      staticClass: "form-control",
+                      attrs: { type: "text", id: "brand" },
+                      domProps: { value: _vm.form.brand },
+                      on: {
+                        input: function($event) {
+                          if ($event.target.composing) {
+                            return
+                          }
+                          _vm.$set(_vm.form, "brand", $event.target.value)
+                        }
+                      }
+                    })
+                  ])
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "row" }, [
+                  _c("div", { staticClass: "col-6" }, [
+                    _c(
+                      "button",
+                      { staticClass: "btn btn-success d-flex ml-auto px-5" },
+                      [_vm._v("Save")]
+                    )
+                  ])
+                ])
+              ]
+            )
+          ]
         )
       ],
       1

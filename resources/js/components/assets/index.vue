@@ -57,7 +57,7 @@
                 if (this.filter.to_date)  /*2020-03-01 test_date=2020-02-02 12:00:00 */
                     this.filtered_items = this.filtered_items.filter(item => item.created_at <= this.filter.to_date + ' ' + '24:00:00');
 
-                console.log(this.filtered_items, this.filter);
+                // console.log(this.filtered_items, this.filter);
                 // this.update_table_caption();
             },
             /************************/
@@ -73,6 +73,7 @@
             control_change(val) {
                 this.change_items = val;
                 this.can_change = val.item_length;
+                // console.log(val);
             },
             /*****************/
             set_filter(val) {
@@ -83,21 +84,21 @@
         },
         /************************/
         created: function () {
-            this.table_waiting=true;
+            this.table_waiting = true;
             axios({
                 url: '/api/get_assets',
                 data: null,
                 method: 'get'
             }).then(res => {
-                console.log('get_users' , res);
+                // console.log('get_users', res);
                 this.information = res.data;
                 this.filtered_items = res.data;
                 this.makeToast(res.data.length + ' Data load successfully', 'success');
-                this.table_waiting=false;
+                this.table_waiting = false;
             }).catch(res => {
-                console.log('get_users' , res);
+                console.log('get_users', res);
                 this.makeToast('Data loading failed', 'danger');
-                this.table_waiting=false;
+                this.table_waiting = false;
             });
         },
         /************************/
