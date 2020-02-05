@@ -32,4 +32,10 @@ class User extends Authenticatable{
 	protected $casts=[
 		'email_verified_at'=>'datetime',
 	];
+	public function venue() {
+		return $this->belongsTo(VenueModel::class,'venue_id');
+	}
+	public function groups() {
+		return $this->belongsToMany(GroupModel::class,'group_user','user_id','group_id');
+	}
 }

@@ -39,26 +39,26 @@
             search() {
                 this.filtered_items = this.information;
 
-
-                if (this.filter.mobile) {
-                    let re = new RegExp(this.filter.mobile + ".*", 'gi');
-                    this.filtered_items = this.filtered_items.filter(item => item.mobile.match(re));
+                if (this.filter.asset_name) {
+                    let re = new RegExp(this.filter.asset_name + ".*", 'gi');
+                    this.filtered_items = this.filtered_items.filter(item => item.asset_name.match(re));
                 }
 
-                if (this.filter.country) {
-                    let re = new RegExp(this.filter.country + ".*", 'gi');
-                    this.filtered_items = this.filtered_items.filter(item => item.country.match(re));
+                if (this.filter.color) {
+                    let re = new RegExp(this.filter.color + ".*", 'gi');
+                    this.filtered_items = this.filtered_items.filter(item => item.color.match(re));
                 }
 
 
-                if (this.filter.from_date)  /*2020-03-01   test_date=2020-02-02 12:00:00 */
-                    this.filtered_items = this.filtered_items.filter(item => item.created_at >= this.filter.from_date + ' ' + '00:00:00');
+                if (this.filter.spec) {
+                    let re = new RegExp(this.filter.spec + ".*", 'gi');
+                    this.filtered_items = this.filtered_items.filter(item => item.spec.match(re));
+                }
 
-                if (this.filter.to_date)  /*2020-03-01 test_date=2020-02-02 12:00:00 */
-                    this.filtered_items = this.filtered_items.filter(item => item.created_at <= this.filter.to_date + ' ' + '24:00:00');
-
-                // console.log(this.filtered_items, this.filter);
-                // this.update_table_caption();
+                if (this.filter.brand) {
+                    let re = new RegExp(this.filter.brand + ".*", 'gi');
+                    this.filtered_items = this.filtered_items.filter(item => item.brand.match(re));
+                }
             },
             /************************/
             makeToast(message = 'IFI message', variant = 'primary') {

@@ -34,7 +34,8 @@
                               @click="openModal($event.target,'u',row.item,row.index)">Edit
                     </b-button>
                     <b-button size="sm" @click="remove(row.item,row.index)" style="width:70px"
-                              class="btn btn-danger mr-2">Remove</b-button>
+                              class="btn btn-danger mr-2">Remove
+                    </b-button>
 
                 </template>
                 <!--******* Row detail ***************-->
@@ -126,6 +127,8 @@
 </template>
 
 <script>
+    import axios from 'axios';
+
     export default {
         name: "data_table",
         /**********************************/
@@ -220,30 +223,72 @@
                 }
             },
             /***********************/
+            makeToast(message = 'IFI message', variant = 'primary') {
+                this.$bvToast.toast(message, {
+                    title: 'IFI message status',
+                    autoHideDelay: 5000,
+                    variant: variant,
+                    solid: true,
+                })
+            },
+            /*************************************/
+
             save_asset() {
                 if (this.save_type === 'i') {
-                    let new_data = {
-                        id: 2,
-                        asset_name: this.form.asset_name,
-                        color: this.form.color,
-                        spec: this.form.spec,
-                        brand: this.form.brand,
-                        // owner_id: form.asset_name,
-                        // created_at: form.asset_name,
-                        // updated_at: form.asset_name,
-                    };
-                    this.information.push(new_data);
+                    /****** insert mode *******/
+                    axios({
+                        url: '/api/asset/insert',
+                        data: this.form,
+                        method: 'post'
+                    }).then(res => {
+                        // console.log('/api/asset/insert', res);
+                        this.information.push(res.data);
+                        this.makeToast('Asset create successfully', 'success');
+                    }).catch(error => {
+                        this.makeToast('Asset create failed : ' + error.response.data, 'danger');
+                    });
                 } else {
-                    this.information[this.selected.index].asset_name = this.form.asset_name;
-                    this.information[this.selected.index].color = this.form.color;
-                    this.information[this.selected.index].spec = this.form.spec;
-                    this.information[this.selected.index].brand = this.form.brand;
+                    /****** update mode *******/
+                    axios({
+                        url: '/api/asset/update',
+                        data: this.form,
+                        method: 'post'
+                    }).then(res => {
+                        // console.log(res);
+                        if (res.data === 1) {
+                            this.information[this.selected.index].asset_name = this.form.asset_name;
+                            this.information[this.selected.index].color = this.form.color;
+                            this.information[this.selected.index].spec = this.form.spec;
+                            this.information[this.selected.index].brand = this.form.brand;
+                            this.makeToast('Asset update successfully', 'success');
+                        }
+                        else
+                            this.makeToast('Asset update failed', 'danger');
+                    }).catch(error => {
+                        console.log(error);
+                        this.makeToast('Asset update failed : ' + error.response.data, 'danger');
+                    });
                 }
                 this.$root.$emit('bv::hide::modal', 'asset_modal_id');
             },
             /***********************/
             remove(item, index) {
-                this.information.splice(index, 1);
+                axios({
+                    url: '/api/asset/remove',
+                    data: item,
+                    method: 'post'
+                }).then(res => {
+                    // console.log('remove asset ', item, index);
+                    if (res.data) {
+                        this.information.splice(this.information.indexOf(item), 1);
+                        this.makeToast('Asset deleted successfully', 'success');
+                    }
+                    else
+                        this.makeToast('Asset delete failed', 'danger');
+                }).catch(error => {
+                    console.log(error);
+                    this.makeToast('Asset delete failed : ' + error.response.data, 'danger');
+                });
             },
             /***********************/
         },

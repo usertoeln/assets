@@ -1,6 +1,6 @@
 <template>
     <div>
-        this is a dashboard from vue.js
+        this is a dashboard
     </div>
 </template>
 

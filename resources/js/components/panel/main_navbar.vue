@@ -17,6 +17,13 @@
                     </b-nav-item-dropdown>
                 </b-navbar-nav>
 
+                <b-navbar-nav>
+                    <b-nav-item-dropdown text="Operations">
+                        <b-dropdown-item :to="{ name : 'warehouse_inventory' }">Warehouse Inventory</b-dropdown-item>
+                        <b-dropdown-item :to="{ name : 'orders' }">Order Management</b-dropdown-item>
+                    </b-nav-item-dropdown>
+                </b-navbar-nav>
+
                 <!-- Right aligned nav items -->
                 <b-navbar-nav class="ml-auto">
                     <b-nav-item-dropdown right>
@@ -57,7 +64,7 @@
             axios.get('/api/user')
                 .then(response => {
                     this.user = response.data;
-                    console.log(response);
+                    // console.log(response);
                 }).catch(response => {
                 this.user = null;
                 console.log(response);

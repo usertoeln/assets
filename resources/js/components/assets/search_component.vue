@@ -14,35 +14,35 @@
                         <div class="card-text">
                             <div class="customSearchSection p-3">
                                 <div class="row">
-                                    <!--******* from_date *********-->
+                                    <!--******* asset_name *********-->
                                     <div class="form-group col-12 col-md-4">
-                                        <label for="test_date_wri">From date:</label>
-                                        <input type="date"
+                                        <label for="asset_name">Asset name:</label>
+                                        <input type="text"
                                                class="form-control"
-                                               v-model="data_form.from_date"
-                                               id="from_date">
+                                               v-model="data_form.asset_name"
+                                               id="asset_name">
                                     </div>
-                                    <!--******* to_date *********-->
+                                    <!--******* color *********-->
                                     <div class="form-group col-12 col-md-4">
-                                        <label for="to_date">To date:</label>
-                                        <input type="date"
+                                        <label for="color">Color:</label>
+                                        <input type="text"
                                                class="form-control"
-                                               v-model="data_form.to_date"
-                                               id="to_date">
+                                               v-model="data_form.color"
+                                               id="color">
                                     </div>
-                                    <!--******* mobile *********-->
+                                    <!--******* spec *********-->
                                     <div class="col-12 col-md-4">
-                                        <b-form-group label="Mobile:">
-                                            <b-form-input v-model="data_form.mobile"
-                                                          label="Mobile:">
+                                        <b-form-group label="Specification:">
+                                            <b-form-input v-model="data_form.spec"
+                                                          label="Specification :">
                                             </b-form-input>
                                         </b-form-group>
                                     </div>
-                                    <!--******* country *********-->
+                                    <!--******* brand *********-->
                                     <div class="col-12 col-md-4">
-                                        <b-form-group label="Country:">
-                                            <b-form-input v-model="data_form.country"
-                                                          label="Country:">
+                                        <b-form-group label="Brand:">
+                                            <b-form-input v-model="data_form.brand"
+                                                          label="Brand:">
                                             </b-form-input>
                                         </b-form-group>
                                     </div>
@@ -72,10 +72,10 @@
             return {
                 information: [],
                 data_form: {
-                    from_date: '',
-                    to_date: '',
-                    mobile: null,
-                    country: null,
+                    asset_name: '',
+                    color: '',
+                    spec: null,
+                    brand: null,
                 },
             }
         },
