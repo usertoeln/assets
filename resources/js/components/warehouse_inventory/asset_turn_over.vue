@@ -28,9 +28,11 @@
                     <!--******* Actions ***************-->
                     <template v-slot:cell(Actions)="row">
                         <b-button size="sm" class="btn btn-primary mr-2" style="width:70px"
+                                  v-if="row.item.rec_type==='init'"
                                   @click="openModal($event.target,'u',row.item,row.index)">Edit
                         </b-button>
                         <b-button size="sm" @click="remove(row.item,row.index)" style="width:70px"
+                                  v-if="row.item.rec_type==='init'"
                                   class="btn btn-danger mr-2">Remove
                         </b-button>
 
@@ -52,22 +54,22 @@
                     <!--******* venue_id *********-->
                     <div :class="[save_type==='i' ? null : 'd-none']">
                         <b-form-group label="Venues:">
-                            <b-form-select
-                                    v-model="form.venue_id"
-                                    :options="venues"
-                                    value-field="venue_id"
-                                    text-field="vname"
+                            <b-form-select required
+                                           v-model="form.venue_id"
+                                           :options="venues"
+                                           value-field="venue_id"
+                                           text-field="vname"
                             ></b-form-select>
                         </b-form-group>
                     </div>
                     <!--******* asset_name *********-->
                     <div :class="[save_type==='i' ? null : 'd-none']">
                         <b-form-group label="Asset:">
-                            <b-form-select
-                                    v-model="form.asset_id"
-                                    :options="assets"
-                                    value-field="id"
-                                    text-field="asset_name"
+                            <b-form-select required
+                                           v-model="form.asset_id"
+                                           :options="assets"
+                                           value-field="id"
+                                           text-field="asset_name"
                             ></b-form-select>
                         </b-form-group>
                     </div>
@@ -75,7 +77,7 @@
                     <div class="form-row">
                         <div class="form-group col-12">
                             <label for="turn_over_asset_count">Asset count:</label>
-                            <input type="number"
+                            <input type="number" required min="=0" max="10000"
                                    class="form-control"
                                    v-model="form.asset_count"
                                    id="turn_over_asset_count">
@@ -85,7 +87,7 @@
                     <div class="form-row">
                         <div class="form-group col-12">
                             <label for="turn_over_serial_no">Serial number:</label>
-                            <input type="text"
+                            <input type="text" required
                                    class="form-control"
                                    v-model="form.serial_no"
                                    id="turn_over_serial_no">
@@ -206,10 +208,11 @@
                     url: '/api/get_venues',
                     data: null,
                     method: 'get'
+
                 }).then(res => {
                     this.venues = res.data;
                     // console.log(res.data);
-                    this.makeToast(res.data.length + ' Venues load successfully', 'success');
+                    // this.makeToast(res.data.length + ' Venues load successfully', 'success');
                 }).catch(res => {
                     console.log('get_users', res);
                     this.makeToast('Venues loading failed', 'danger');
@@ -228,7 +231,7 @@
                             asset_name: item.asset_name + ' , ' + item.brand + ' , ' + item.color
                         })
                     });
-                    this.makeToast(res.data.length + ' Asset load successfully', 'success');
+                    // this.makeToast(res.data.length + ' Asset load successfully', 'success');
                 }).catch(res => {
                     console.log('get_assets', res);
                     this.makeToast('Asset load failed', 'danger');
@@ -244,7 +247,7 @@
                 }).then(res => {
                     // console.log('get_data', res.data);
                     this.turn_overs = res.data;
-                    this.makeToast(res.data.length + ' turnover records load successfully', 'success');
+                    // this.makeToast(res.data.length + ' turnover records load successfully', 'success');
                     this.asset_turn_over_table_waiting = false;
                 }).catch(error => {
                     this.turn_overs = [];
@@ -266,6 +269,7 @@
             /***********************/
             openModal(target, m_type, item = null, index = 0) {
                 // m_type = 'i' || 'u';
+                // console.log(item);
                 this.save_type = m_type;
                 if (m_type === 'i') {
                     this.modal.header = 'Define new ';
@@ -319,6 +323,7 @@
                     if (res.data) {
                         this.turn_overs.splice(this.turn_overs.indexOf(item), 1);
                         this.makeToast('Turn over Delete successfully', 'success');
+                        bus.$emit('on_change_turn_over', null);
                     }
                     else
                         this.makeToast('Turn over Delete failed', 'danger');
@@ -345,8 +350,9 @@
                         method: 'post'
                     }).then(res => {
                         console.log('/api/order_detail/insert', res);
-                        this.turn_overs.push(res.data);
+                        this.turn_overs.push(res.data[0]);
                         this.makeToast('Turn over create successfully', 'success');
+                        bus.$emit('on_change_turn_over', null);
                     }).catch(error => {
                         console.log(error);
                         this.makeToast('Turn over create failed : ' + error.response.data, 'danger');
@@ -363,6 +369,7 @@
                             this.turn_overs[this.selected.index].serial_no = this.form.serial_no;
                             this.turn_overs[this.selected.index].descp = this.form.descp;
                             this.makeToast('Asset update successfully', 'success');
+                            bus.$emit('on_change_turn_over', null);
                         }
                         else
                             this.makeToast('Asset update failed', 'danger');

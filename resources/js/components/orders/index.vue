@@ -15,6 +15,7 @@
     import axios from 'axios';
     import venues from './venues';
     import orders from './orders';
+    import bus from '../../event_bus';
 
     export default {
         name: "index",
@@ -46,7 +47,6 @@
                 }).then(res => {
                     this.mojodi_table_waiting = false;
                     this.mojodi = res.data;
-                    this.makeToast(res.data.length + ' Warehouse inventory load successfully', 'success');
                 }).catch(res => {
                     console.log(res);
                     this.makeToast('Warehouse inventory loading failed', 'danger');
@@ -58,6 +58,9 @@
         /***********************************/
         created() {
             this.get_mojodi();
+            bus.$on('on_order_change', (data) => {
+                this.get_mojodi();
+            });
         },
         /***********************************/
         /***********************************/

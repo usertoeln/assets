@@ -17,6 +17,7 @@ Route::middleware('auth:api')->get(
 	'/user',function(Request $request) {
 	return $request->user();
 });
+Route::get('/get_user_access','UserController@get_user_access')->middleware('auth:api');
 Route::get('/get_users','UserController@get_users')->middleware('auth:api');
 Route::get('/get_groups','GroupController@get_groups')->middleware('auth:api');
 Route::get('/get_assets','AssetController@get_assets')->middleware('auth:api');
@@ -32,9 +33,15 @@ Route::post('ops/get_mojodi','AssetController@get_mojodi')->middleware('auth:api
 Route::post('ops/get_asset_turn_over','AssetController@get_asset_turn_over')->middleware('auth:api');
 //******** orders *********************
 Route::post('get_full_order','OrderController@get_full_order')->middleware('auth:api');
+Route::post('sample_policy','OrderDetailController@sample_policy')->middleware('auth:api');
 //******** order_detail *********************
 Route::post('order_detail/insert','OrderDetailController@insert')->middleware('auth:api');
 Route::post('order_detail/update','OrderDetailController@update')->middleware('auth:api');
 Route::post('order_detail/remove','OrderDetailController@remove')->middleware('auth:api');
-
+Route::post('order_detail/delete','OrderDetailController@delete')->middleware('auth:api');
+Route::post('order_detail/reject_order','OrderDetailController@reject_order')->middleware('auth:api');
+Route::post('order_detail/receive_order','OrderDetailController@receive_order')->middleware('auth:api');
+Route::post('order_detail/save_duty','OrderDetailController@save_duty')->middleware('auth:api');
+Route::post('order_detail/sent_order','OrderDetailController@sent_order')->middleware('auth:api');
+Route::post('order_detail/packaging_order','OrderDetailController@packaging_order')->middleware('auth:api');
 //******** operations *********************

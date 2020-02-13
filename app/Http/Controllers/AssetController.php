@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\AssetModel;
 use App\Providers\HttpResponseProvider;
+use App\StatusModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -95,11 +96,11 @@ class AssetController extends Controller{
 	public function get_asset_turn_over(Request $request) {
 		$user=$request->user();
 		if($user->can('get_asset_turn_over',$user)) {
-			$data=DB::table('order_view')->where(
+			$data=DB::table('asset_turn_over_report')->where(
 				[
 					['venue_id','=',$request->venue_id ?? 0],
 					['asset_id','=',$request->asset_id ?? 0],
-					['status','=',6],
+//					['status','=',6],
 				])->get();
 			Log::info(
 				json_encode(
@@ -107,7 +108,7 @@ class AssetController extends Controller{
 						'method'=>__METHOD__,
 						'user'  =>Auth::user()->name ?? 'NA',
 						'descp' =>'get_asset_turn_over',
-						'data'  =>$data,
+						'data'  =>$data->count() ?? -1,
 					]));
 			return HttpResponseProvider::return ($data,HttpResponseProvider::Response_Accepted);
 		} else {

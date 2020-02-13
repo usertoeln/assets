@@ -1588,6 +1588,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _venues__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./venues */ "./resources/js/components/orders/venues.vue");
 /* harmony import */ var _orders__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./orders */ "./resources/js/components/orders/orders.vue");
+/* harmony import */ var _event_bus__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../event_bus */ "./resources/js/event_bus.js");
 //
 //
 //
@@ -1601,6 +1602,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+
 
 
 
@@ -1646,8 +1648,6 @@ __webpack_require__.r(__webpack_exports__);
       }).then(function (res) {
         _this.mojodi_table_waiting = false;
         _this.mojodi = res.data;
-
-        _this.makeToast(res.data.length + ' Warehouse inventory load successfully', 'success');
       })["catch"](function (res) {
         console.log(res);
 
@@ -1661,7 +1661,12 @@ __webpack_require__.r(__webpack_exports__);
 
   /***********************************/
   created: function created() {
+    var _this2 = this;
+
     this.get_mojodi();
+    _event_bus__WEBPACK_IMPORTED_MODULE_3__["default"].$on('on_order_change', function (data) {
+      _this2.get_mojodi();
+    });
   }
   /***********************************/
 
@@ -1682,6 +1687,9 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _event_bus__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../event_bus */ "./resources/js/event_bus.js");
 //
 //
 //
@@ -1884,6 +1892,192 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
 /* harmony default export */ __webpack_exports__["default"] = ({
   /**********************/
   name: "orders",
@@ -1894,11 +2088,11 @@ __webpack_require__.r(__webpack_exports__);
       assets: [],
       data_exists: true,
       asset: {},
-      user_scopes: ['remove', 'edit', 'reject', 'received', 'sent', 'pack', 'duty'],
+      user_scopes: [],
       orders: [],
       table_waiting: false,
       orders_fields: ['#', {
-        key: 'order_detail_id',
+        key: 'order_id',
         sortable: true,
         label: 'ID'
       }, {
@@ -1922,19 +2116,31 @@ __webpack_require__.r(__webpack_exports__);
         sortable: true,
         label: 'Status'
       }, {
+        key: 'parent_order',
+        sortable: true,
+        label: 'Audit'
+      }, {
         key: 'rec_type',
         sortable: true,
         label: 'Type'
       }, 'Actions'],
+      form_errors: [],
       filter: null,
       filterOn: [],
       totalRows: 0,
-      filtered_items: {},
+      order_filtered_items: this.orders,
+      order_filter: {
+        vname: '',
+        asset_name: '',
+        order_id: '',
+        status: ''
+      },
       save_type: '',
       selected: {
         item: null,
         index: null
       },
+      selected_venue: [],
       order_form: {
         order_id: '',
         venue_id: '',
@@ -1948,6 +2154,7 @@ __webpack_require__.r(__webpack_exports__);
         descp: '',
         owner_id: ''
       },
+      duty_form: {},
       selected_items: [],
       order_modal: {
         header: 'Orders'
@@ -1963,13 +2170,23 @@ __webpack_require__.r(__webpack_exports__);
   /************************/
   computed: {
     get_order_header: function get_order_header() {
-      var header = null;
-      return 'You have xxx record';
+      return this.orders.length ? this.orders.length + ' Record found' : 'Nothing found';
+    },
+    get_max_asset_venue: function get_max_asset_venue() {
+      var venue_count = this.selected_venue.length ? this.selected_venue[0].asset_count : 0;
+      var request_count = this.selected_items.length ? this.selected_items[0].asset_count : 0;
+      return venue_count > request_count ? request_count : venue_count;
     }
   },
 
   /**********************/
   created: function created() {
+    var _this = this;
+
+    _event_bus__WEBPACK_IMPORTED_MODULE_1__["default"].$on('on_venue_select', function (val) {
+      _this.selected_venue = val;
+    });
+    this.get_user_access();
     this.get_assets();
     this.get_full_order();
   },
@@ -1979,72 +2196,126 @@ __webpack_require__.r(__webpack_exports__);
     selected_items: {
       deep: true,
       handler: function handler(val) {}
+    },
+    order_filter: {
+      deep: true,
+      handler: function handler(val) {
+        this.filter = val;
+        this.search();
+      }
     }
   },
 
   /************************/
   methods: {
     /***********************/
+    get_user_access: function get_user_access() {
+      var _this2 = this;
+
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a.get('/api/get_user_access').then(function (response) {
+        _this2.user_scopes = response.data.order_access;
+      })["catch"](function (response) {
+        console.log(response);
+      });
+    },
 
     /***********************/
     get_assets: function get_assets() {
-      var _this = this;
+      var _this3 = this;
 
-      axios({
+      axios__WEBPACK_IMPORTED_MODULE_0___default()({
         url: '/api/get_assets',
         data: null,
         method: 'get'
       }).then(function (res) {
         $.each(res.data, function (index, item) {
-          _this.assets.push({
+          _this3.assets.push({
             id: item.id,
             asset_name: item.asset_name + ' , ' + item.brand + ' , ' + item.color
           });
-        });
-
-        _this.makeToast(res.data.length + ' Asset load successfully', 'success');
+        }); // this.makeToast(res.data.length + ' Asset load successfully', 'success');
       })["catch"](function (res) {
         console.log('get_assets', res);
 
-        _this.makeToast('Asset load failed', 'danger');
+        _this3.makeToast('Asset load failed', 'danger');
       });
     },
 
     /***********************/
     get_full_order: function get_full_order() {
-      var _this2 = this;
+      var _this4 = this;
 
       this.orders_table_waiting = true;
-      axios({
+      axios__WEBPACK_IMPORTED_MODULE_0___default()({
         url: '/api/get_full_order',
-        data: null,
+        data: {
+          show_init: false
+        },
         method: 'post'
       }).then(function (res) {
-        console.log('get_data', res.data);
-        _this2.orders = res.data;
+        // console.log('get_data', res.data);
+        _this4.orders = res.data;
+        _this4.order_filtered_items = res.data; // this.makeToast(res.data.length + ' orders load successfully', 'success');
 
-        _this2.makeToast(res.data.length + ' orders load successfully', 'success');
-
-        _this2.orders_table_waiting = false;
+        _this4.orders_table_waiting = false;
       })["catch"](function (error) {
-        _this2.orders = [];
+        _this4.orders = [];
         console.log('get_data', error);
-        _this2.orders_table_waiting = false;
+        _this4.orders_table_waiting = false;
 
-        _this2.makeToast('orders records loading failed', 'danger');
+        _this4.makeToast('orders records loading failed', 'danger');
       });
     },
 
     /***********************/
     onRowSelected: function onRowSelected(item) {
       this.selected_items = item.length ? item : {};
+      _event_bus__WEBPACK_IMPORTED_MODULE_1__["default"].$emit('on_order_selected', this.selected_items);
     },
 
     /***********************/
-    onFiltered: function onFiltered(filteredItems) {},
+    onFiltered: function onFiltered(filteredItems) {
+      this.totalRows = filteredItems.length;
+      this.currentPage = 1;
+    },
 
     /***********************/
-    search: function search() {},
+    search: function search() {
+      var _this5 = this;
+
+      this.order_filtered_items = this.orders;
+
+      if (this.order_filter.vname) {
+        var re = new RegExp(this.order_filter.vname + ".*", 'gi');
+        this.order_filtered_items = this.order_filtered_items.filter(function (item) {
+          return item.vname.match(re);
+        });
+      }
+
+      if (this.order_filter.asset_name) {
+        var _re = new RegExp(this.order_filter.asset_name + ".*", 'gi');
+
+        this.order_filtered_items = this.order_filtered_items.filter(function (item) {
+          return item.asset_name.match(_re);
+        });
+      }
+
+      if (this.order_filter.order_id) {
+        this.order_filtered_items = this.order_filtered_items.filter(function (item) {
+          // console.log(item.order_id, this.order_filter.order_id);
+          return item.order_id == _this5.order_filter.order_id || item.parent_order == _this5.order_filter.order_id;
+        });
+      }
+
+      if (this.order_filter.status) {
+        var _re2 = new RegExp(this.order_filter.status + ".*", 'gi');
+
+        this.order_filtered_items = this.order_filtered_items.filter(function (item) {
+          // console.log(item.status, this.order_filter.status);
+          return item.status.match(_re2);
+        });
+      }
+    },
 
     /***********************/
     openModal: function openModal(target, m_type) {
@@ -2054,35 +2325,38 @@ __webpack_require__.r(__webpack_exports__);
       this.save_type = m_type;
 
       if (m_type === 'i') {
-        this.modal.header = 'Define new ';
-        console.log('openModal', this.selected_items);
-        this.form = {
-          order_id: this.selected_items[0].order_id,
-          venue_id: this.selected_items[0].venue_id,
-          order_detail_id: this.selected_items[0].order_detail_id,
-          asset_id: this.selected_items[0].asset_id,
-          asset_count: null,
-          serial_no: null,
-          descp: null,
-          status: 6,
-          rec_type: 'init'
+        this.order_modal.header = 'Define new request';
+        this.order_form = {
+          order_id: 0,
+          venue_id: 0,
+          parent_order: '',
+          order_detail_id: 0,
+          asset_id: '',
+          asset_count: '',
+          serial_no: '',
+          status: 1,
+          rec_type: 'debit',
+          descp: '',
+          owner_id: ''
         };
         this.selected = {
           item: null,
           index: null
         };
       } else {
-        this.modal.header = 'Edit warehouse inventory';
-        this.form = {
+        this.order_modal.header = 'Edit order';
+        this.order_form = {
           order_id: item.order_id,
           venue_id: item.venue_id,
+          parent_order: item.parent_order,
           order_detail_id: item.order_detail_id,
           asset_id: item.asset_id,
           asset_count: item.asset_count,
           serial_no: item.serial_no,
+          status: item.status,
+          rec_type: item.rec_type,
           descp: item.descp,
-          status: 6,
-          rec_type: 'init'
+          owner_id: item.owner_id
         };
         this.selected = {
           item: item,
@@ -2090,7 +2364,7 @@ __webpack_require__.r(__webpack_exports__);
         };
       }
 
-      this.$root.$emit('bv::show::modal', 'turn_over_modal_id', target);
+      this.$root.$emit('bv::show::modal', 'order_modal', target);
     },
 
     /***********************/
@@ -2107,81 +2381,61 @@ __webpack_require__.r(__webpack_exports__);
 
     /***********************/
     remove: function remove(item, index) {
-      var _this3 = this;
+      var _this6 = this;
 
-      axios({
+      axios__WEBPACK_IMPORTED_MODULE_0___default()({
         url: '/api/order_detail/remove',
         data: {
           order_detail_id: item.order_detail_id
         },
         method: 'post'
       }).then(function (res) {
-        console.log('remove asset ', item, index);
-
+        // console.log('remove asset ', item, index);
         if (res.data) {
-          _this3.turn_overs.splice(_this3.turn_overs.indexOf(item), 1);
+          _this6.orders.splice(_this6.orders.indexOf(item), 1);
 
-          _this3.makeToast('Turn over Delete successfully', 'success');
-        } else _this3.makeToast('Turn over Delete failed', 'danger');
+          _this6.makeToast('Order Delete successfully', 'success');
+
+          _this6.get_full_order();
+        } else _this6.makeToast('Order Delete failed', 'danger');
       })["catch"](function (error) {
         console.log(error);
 
-        _this3.makeToast('Asset delete failed : ' + error.response.data, 'danger');
+        _this6.makeToast('Order delete failed : ' + error.response.data, 'danger');
+      });
+    },
+
+    /***********************/
+    delete_order: function delete_order(item, index) {
+      var _this7 = this;
+
+      axios__WEBPACK_IMPORTED_MODULE_0___default()({
+        url: '/api/order_detail/delete',
+        data: {
+          order_id: item.order_id
+        },
+        method: 'post'
+      }).then(function (res) {
+        console.log('delete_order ', item, index);
+
+        if (res.data) {
+          _this7.orders.splice(_this7.orders.indexOf(item), 1);
+
+          _this7.makeToast('Order Delete successfully', 'success');
+
+          _this7.get_full_order();
+        } else _this7.makeToast('Order Delete failed', 'danger');
+      })["catch"](function (error) {
+        console.log(error);
+
+        _this7.makeToast('Order delete failed : ' + error.response.data, 'danger');
       });
     },
 
     /***********************/
     get_asset_modal_id: function get_asset_modal_id() {
       var id = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
-      if (id) return 'turn_over_modal_id_' + id;else {
-        return 'turn_over_modal_id';
-      }
-    },
-
-    /***********************/
-    save_turn_over: function save_turn_over() {
-      var _this4 = this;
-
-      if (this.save_type === 'i') {
-        /****** insert mode *******/
-        axios({
-          url: '/api/order_detail/insert',
-          data: this.form,
-          method: 'post'
-        }).then(function (res) {
-          console.log('/api/order_detail/insert', res);
-
-          _this4.turn_overs.push(res.data);
-
-          _this4.makeToast('Turn over create successfully', 'success');
-        })["catch"](function (error) {
-          console.log(error);
-
-          _this4.makeToast('Turn over create failed : ' + error.response.data, 'danger');
-        });
-      } else {
-        axios({
-          url: '/api/order_detail/update',
-          data: this.form,
-          method: 'post'
-        }).then(function (res) {
-          console.log('order_detail', res);
-
-          if (res.data) {
-            _this4.turn_overs[_this4.selected.index].asset_count = _this4.form.asset_count;
-            _this4.turn_overs[_this4.selected.index].serial_no = _this4.form.serial_no;
-            _this4.turn_overs[_this4.selected.index].descp = _this4.form.descp;
-
-            _this4.makeToast('Asset update successfully', 'success');
-          } else _this4.makeToast('Asset update failed', 'danger');
-        })["catch"](function (error) {
-          console.log(error);
-
-          _this4.makeToast('order_detail update failed : ' + error.response.data, 'danger');
-        });
-      }
-
-      this.$root.$emit('bv::hide::modal', 'turn_over_modal_id');
+      return id ? 'turn_over_modal_id_' + id : 'turn_over_modal_id_';
     },
 
     /***********************/
@@ -2197,24 +2451,35 @@ __webpack_require__.r(__webpack_exports__);
       if (!has_access) return 'd-none';
 
       switch (btn) {
+        case 'delete':
+          rec_type_state = true;
+          status_state = true;
+          break;
+
         case 'remove':
           rec_type_state = rec_type === 'debit' || rec_type === 'credit';
-          status_state = status === 'request';
+          status_state = status === 'request' && !item.has_parent_order;
+          status_state &= !item.parent.length;
+          status_state &= !item.children.length;
           break;
 
         case 'edit':
           rec_type_state = rec_type === 'debit' || rec_type === 'credit';
-          status_state = status !== 'reject' && status !== 'received';
+          status_state = status === 'request' && !item.has_parent_order;
+          status_state &= !item.parent.length;
+          status_state &= !item.children.length;
           break;
 
         case 'reject':
           rec_type_state = rec_type === 'debit';
-          status_state = status === 'request';
+          status_state = status === 'request' && !item.has_parent_order;
+          status_state &= !item.parent.length;
+          status_state &= !item.children.length;
           break;
 
         case 'received':
-          rec_type_state = rec_type === 'debit';
-          status_state = status === 'request';
+          rec_type_state = rec_type === 'credit';
+          status_state = status === 'sent' && false;
           break;
 
         case 'sent':
@@ -2222,19 +2487,218 @@ __webpack_require__.r(__webpack_exports__);
           status_state = status === 'packaging';
           break;
 
-        case 'pack':
+        case 'packaging':
           rec_type_state = rec_type === 'credit';
           status_state = status === 'duty';
           break;
 
         case 'duty':
+          var has_venue = this.selected_venue.length;
           rec_type_state = rec_type === 'debit';
-          status_state = status === 'request';
+          status_state = status === 'request' && has_venue && !item.has_parent_order;
+          status_state &= this.selected_items.length;
           break;
       }
 
       btn_class = rec_type_state && status_state ? null : 'd-none';
       return btn_class;
+    },
+
+    /***********************/
+    save_order: function save_order() {
+      var _this8 = this;
+
+      if (this.save_type === 'i') {
+        /****** insert mode *******/
+        axios__WEBPACK_IMPORTED_MODULE_0___default()({
+          url: '/api/order_detail/insert',
+          data: this.order_form,
+          method: 'post'
+        }).then(function (res) {
+          // console.log('save_order', res);
+          _this8.orders.push(res.data[0]);
+
+          _this8.makeToast('order create successfully', 'success');
+        })["catch"](function (error) {
+          console.log(error);
+
+          _this8.makeToast('order create failed : ' + error.response.data, 'danger');
+        });
+      } else {
+        axios__WEBPACK_IMPORTED_MODULE_0___default()({
+          url: '/api/order_detail/update',
+          data: this.order_form,
+          method: 'post'
+        }).then(function (res) {
+          console.log('order_detail', res);
+
+          if (res.data) {
+            _this8.orders[_this8.selected.index].asset_count = _this8.order_form.asset_count; // this.orders[this.selected.index].serial_no = this.form.serial_no;
+            // this.orders[this.selected.index].descp = this.form.descp;
+
+            _this8.makeToast('order update successfully', 'success');
+          } else _this8.makeToast('order update failed', 'danger');
+        })["catch"](function (error) {
+          console.log(error);
+
+          _this8.makeToast('order update failed : ' + error.response.data, 'danger');
+        });
+      }
+
+      this.$root.$emit('bv::hide::modal', 'order_modal');
+    },
+
+    /***********************/
+    sent: function sent(item, index) {
+      var _this9 = this;
+
+      axios__WEBPACK_IMPORTED_MODULE_0___default()({
+        url: '/api/order_detail/sent_order',
+        data: {
+          order_detail_id: item.order_detail_id,
+          order_id: item.order_id
+        },
+        method: 'post'
+      }).then(function (res) {
+        if (res.data) _this9.orders[_this9.orders.indexOf(item)].status = res.data.status;else _this9.makeToast('Reject order failed', 'danger');
+      })["catch"](function (error) {
+        console.log(error);
+
+        _this9.makeToast('Reject order failed : ' + error.response.data, 'danger');
+      });
+    },
+
+    /***********************/
+    packaging: function packaging(item, index) {
+      var _this10 = this;
+
+      axios__WEBPACK_IMPORTED_MODULE_0___default()({
+        url: '/api/order_detail/packaging_order',
+        data: {
+          order_detail_id: item.order_detail_id,
+          order_id: item.order_id
+        },
+        method: 'post'
+      }).then(function (res) {
+        if (res.data) _this10.orders[_this10.orders.indexOf(item)].status = res.data.status;else _this10.makeToast('Reject order failed', 'danger');
+      })["catch"](function (error) {
+        console.log(error);
+
+        _this10.makeToast('Reject order failed : ' + error.response.data, 'danger');
+      });
+    },
+
+    /***********************/
+    reject_order: function reject_order(item, index) {
+      var _this11 = this;
+
+      axios__WEBPACK_IMPORTED_MODULE_0___default()({
+        url: '/api/order_detail/reject_order',
+        data: {
+          order_detail_id: item.order_detail_id,
+          order_id: item.order_id
+        },
+        method: 'post'
+      }).then(function (res) {
+        if (res.data) _this11.orders[_this11.orders.indexOf(item)].status = res.data.status;else _this11.makeToast('Reject order failed', 'danger');
+      })["catch"](function (error) {
+        console.log(error);
+
+        _this11.makeToast('Reject order failed : ' + error.response.data, 'danger');
+      });
+    },
+
+    /***********************/
+    receive_order: function receive_order(item, index) {
+      var _this12 = this;
+
+      axios__WEBPACK_IMPORTED_MODULE_0___default()({
+        url: '/api/order_detail/receive_order',
+        data: {
+          order_detail_id: item.order_detail_id,
+          order_id: item.order_id
+        },
+        method: 'post'
+      }).then(function (res) {
+        if (res.data) _this12.orders.splice(index, 1, res.data);else _this12.makeToast('Receive order failed', 'danger');
+      })["catch"](function (error) {
+        console.log(error);
+
+        _this12.makeToast('Receive order failed ', 'danger');
+      });
+    },
+
+    /***********************/
+    save_duty: function save_duty() {
+      var _this13 = this;
+
+      axios__WEBPACK_IMPORTED_MODULE_0___default()({
+        url: '/api/order_detail/save_duty',
+        data: this.duty_form,
+        method: 'post'
+      }).then(function (res) {
+        _this13.form_errors = [];
+        console.log(res);
+
+        if (res.data) {
+          _this13.form_errors = [];
+
+          _this13.orders.push(res.data[0]);
+
+          _this13.$root.$emit('bv::hide::modal', 'duty_modal');
+        } else {
+          _this13.makeToast('Duty create failed.', 'danger');
+
+          _this13.form_errors = ['Save error contact system administrator'];
+        }
+      })["catch"](function (error) {
+        _this13.form_errors = error.response.data;
+
+        _this13.makeToast('Error in connection', 'danger');
+      });
+    },
+
+    /***********************/
+    get_duty: function get_duty(item, index) {
+      this.form_errors = [];
+      this.duty_form = {
+        order_id: item.order_id,
+        venue_id_source: this.selected_venue[0].venue_id,
+        venue_id_target: item.venue_id,
+        asset_id: this.selected_venue[0].asset_id,
+        asset_count: 0,
+        asset_name: this.selected_venue[0].asset_name
+      };
+      console.log('get_duty', item, index, this.selected_venue, this.duty_form);
+      this.$root.$emit('bv::show::modal', 'duty_modal');
+    },
+
+    /***********************/
+    reload_order: function reload_order() {
+      this.get_full_order();
+      _event_bus__WEBPACK_IMPORTED_MODULE_1__["default"].$emit('on_order_change', null);
+    },
+
+    /***********************/
+    order_received: function order_received(item) {
+      var _this14 = this;
+
+      this.orders_table_waiting = true;
+      axios__WEBPACK_IMPORTED_MODULE_0___default()({
+        url: '/api/order_detail/receive_order',
+        data: {
+          order_detail_id: item
+        },
+        method: 'post'
+      }).then(function (res) {
+        if (res.data) _this14.orders[_this14.orders.indexOf(item)].status = res.data.status;else _this14.makeToast('Receiving order failed,' + res.data, 'danger');
+        _this14.orders_table_waiting = false;
+      })["catch"](function (error) {
+        console.log('order_received', error);
+        _this14.orders_table_waiting = false;
+
+        _this14.makeToast('Receiving order update connection failed,' + error.response.data, 'danger');
+      });
     }
     /***********************/
 
@@ -2252,6 +2716,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _event_bus__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../event_bus */ "./resources/js/event_bus.js");
 //
 //
 //
@@ -2298,7 +2763,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
+
 /* harmony default export */ __webpack_exports__["default"] = ({
   /************************/
   name: "venues",
@@ -2354,7 +2819,9 @@ __webpack_require__.r(__webpack_exports__);
         solid: true
       });
     },
-    onRowSelected: function onRowSelected(item) {},
+    onRowSelected: function onRowSelected(item) {
+      _event_bus__WEBPACK_IMPORTED_MODULE_0__["default"].$emit('on_venue_select', item);
+    },
     onFiltered: function onFiltered(filteredItems) {
       this.totalRows = filteredItems.length;
       this.currentPage = 1;
@@ -2425,7 +2892,12 @@ __webpack_require__.r(__webpack_exports__);
 
   /************************/
   created: function created() {
+    var _this = this;
+
     this.filtered_items = this.mojodi;
+    _event_bus__WEBPACK_IMPORTED_MODULE_0__["default"].$on('on_order_selected', function (val) {
+      _this.mojodi_filter.asset_name = val.length ? val[0].asset_name : '';
+    });
   }
   /************************/
 
@@ -2470,6 +2942,7 @@ __webpack_require__.r(__webpack_exports__);
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _event_bus__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../event_bus */ "./resources/js/event_bus.js");
 //
 //
 //
@@ -2513,11 +2986,19 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 
+
 /* harmony default export */ __webpack_exports__["default"] = ({
   name: "main_navbar",
   data: function data() {
     return {
-      user: ''
+      user: '',
+      user_access: {
+        view_menu_order_management: false,
+        view_menu_warehouse_inventory: false,
+        view_menu_operations: false,
+        view_menu_data: false,
+        order_access: []
+      }
     };
   },
   methods: {
@@ -2527,15 +3008,28 @@ __webpack_require__.r(__webpack_exports__);
       })["catch"](function (response) {
         console.log(response);
       });
+    },
+    get_user_access: function get_user_access() {
+      var _this = this;
+
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a.get('/api/get_user_access').then(function (response) {
+        _this.user_access = response.data;
+        _event_bus__WEBPACK_IMPORTED_MODULE_1__["default"].$emit('get_user_access', response.data); // console.log('main_navbar get_user_access bus.emit', response.data);
+      })["catch"](function (response) {
+        console.log(response);
+      });
     }
   },
+  mounted: function mounted() {},
   created: function created() {
-    var _this = this;
+    var _this2 = this;
 
     axios__WEBPACK_IMPORTED_MODULE_0___default.a.get('/api/user').then(function (response) {
-      _this.user = response.data; // console.log(response);
+      _this2.user = response.data;
+
+      _this2.get_user_access();
     })["catch"](function (response) {
-      _this.user = null;
+      _this2.user = null;
       console.log(response);
     });
   }
@@ -3614,6 +4108,8 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
@@ -3733,8 +4229,7 @@ __webpack_require__.r(__webpack_exports__);
         method: 'get'
       }).then(function (res) {
         _this2.venues = res.data; // console.log(res.data);
-
-        _this2.makeToast(res.data.length + ' Venues load successfully', 'success');
+        // this.makeToast(res.data.length + ' Venues load successfully', 'success');
       })["catch"](function (res) {
         console.log('get_users', res);
 
@@ -3756,9 +4251,7 @@ __webpack_require__.r(__webpack_exports__);
             id: item.id,
             asset_name: item.asset_name + ' , ' + item.brand + ' , ' + item.color
           });
-        });
-
-        _this3.makeToast(res.data.length + ' Asset load successfully', 'success');
+        }); // this.makeToast(res.data.length + ' Asset load successfully', 'success');
       })["catch"](function (res) {
         console.log('get_assets', res);
 
@@ -3780,9 +4273,7 @@ __webpack_require__.r(__webpack_exports__);
         method: 'post'
       }).then(function (res) {
         // console.log('get_data', res.data);
-        _this4.turn_overs = res.data;
-
-        _this4.makeToast(res.data.length + ' turnover records load successfully', 'success');
+        _this4.turn_overs = res.data; // this.makeToast(res.data.length + ' turnover records load successfully', 'success');
 
         _this4.asset_turn_over_table_waiting = false;
       })["catch"](function (error) {
@@ -3810,6 +4301,7 @@ __webpack_require__.r(__webpack_exports__);
       var item = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
       var index = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
       // m_type = 'i' || 'u';
+      // console.log(item);
       this.save_type = m_type;
 
       if (m_type === 'i') {
@@ -3880,6 +4372,8 @@ __webpack_require__.r(__webpack_exports__);
           _this5.turn_overs.splice(_this5.turn_overs.indexOf(item), 1);
 
           _this5.makeToast('Turn over Delete successfully', 'success');
+
+          _event_bus__WEBPACK_IMPORTED_MODULE_1__["default"].$emit('on_change_turn_over', null);
         } else _this5.makeToast('Turn over Delete failed', 'danger');
       })["catch"](function (error) {
         console.log(error);
@@ -3909,9 +4403,11 @@ __webpack_require__.r(__webpack_exports__);
         }).then(function (res) {
           console.log('/api/order_detail/insert', res);
 
-          _this6.turn_overs.push(res.data);
+          _this6.turn_overs.push(res.data[0]);
 
           _this6.makeToast('Turn over create successfully', 'success');
+
+          _event_bus__WEBPACK_IMPORTED_MODULE_1__["default"].$emit('on_change_turn_over', null);
         })["catch"](function (error) {
           console.log(error);
 
@@ -3931,6 +4427,8 @@ __webpack_require__.r(__webpack_exports__);
             _this6.turn_overs[_this6.selected.index].descp = _this6.form.descp;
 
             _this6.makeToast('Asset update successfully', 'success');
+
+            _event_bus__WEBPACK_IMPORTED_MODULE_1__["default"].$emit('on_change_turn_over', null);
           } else _this6.makeToast('Asset update failed', 'danger');
         })["catch"](function (error) {
           console.log(error);
@@ -4027,9 +4525,7 @@ __webpack_require__.r(__webpack_exports__);
       }).then(function (res) {
         // this.venue_assets_table_waiting = false;
         _this.venue_assets_table_waiting = false;
-        _this.venue_assets_data = res.data;
-
-        _this.makeToast(res.data.length + ' Warehouse inventory load successfully', 'success');
+        _this.venue_assets_data = res.data; // this.makeToast(res.data.length + ' Warehouse inventory load successfully', 'success');
       })["catch"](function (res) {
         console.log('get_users', res);
 
@@ -4042,9 +4538,12 @@ __webpack_require__.r(__webpack_exports__);
       this.selected_asset = val;
     }
   },
-  created: function created() {// bus.$on('on_change_venue', (data) => {
-    // console.log(data);
-    // });
+  created: function created() {
+    var _this2 = this;
+
+    _event_bus__WEBPACK_IMPORTED_MODULE_4__["default"].$on('on_change_venue', function (data) {
+      _this2.get_venue_assets(data);
+    });
   }
 });
 
@@ -4275,6 +4774,9 @@ __webpack_require__.r(__webpack_exports__);
   created: function created() {
     var _this = this;
 
+    _event_bus__WEBPACK_IMPORTED_MODULE_1__["default"].$on('on_change_turn_over', function () {
+      _event_bus__WEBPACK_IMPORTED_MODULE_1__["default"].$emit('on_change_venue', _this.selected_venue);
+    });
     this.venues_waiting = true;
     axios__WEBPACK_IMPORTED_MODULE_0___default()({
       url: '/api/get_venues',
@@ -4282,9 +4784,7 @@ __webpack_require__.r(__webpack_exports__);
       method: 'get'
     }).then(function (res) {
       // console.log(res.data);
-      _this.venues = res.data;
-
-      _this.makeToast(res.data.length + ' Venues load successfully', 'success');
+      _this.venues = res.data; // this.makeToast(res.data.length + ' Venues load successfully', 'success');
 
       _this.venues_waiting = false;
     })["catch"](function (res) {
@@ -4297,8 +4797,8 @@ __webpack_require__.r(__webpack_exports__);
   },
   watch: {
     selected_venue: function selected_venue(val) {
-      this.$emit('on_select_venue', val);
-      _event_bus__WEBPACK_IMPORTED_MODULE_1__["default"].$emit('on_change_venue', val);
+      // this.$emit('on_select_venue', this.selected_venue);
+      _event_bus__WEBPACK_IMPORTED_MODULE_1__["default"].$emit('on_change_venue', this.selected_venue);
     }
   }
 });
@@ -27786,550 +28286,1234 @@ var render = function() {
     _vm._m(0),
     _vm._v(" "),
     _c("div", { staticClass: "card-body" }, [
-      _c(
-        "div",
-        { staticClass: "card-text" },
-        [
-          _c("p", { domProps: { innerHTML: _vm._s(_vm.get_order_header) } }),
+      _c("div", { staticClass: "card-text" }, [
+        _c("div", { staticClass: "row justify-content-around" }, [
+          _c("div", { staticClass: "col-12 col-md-3" }, [
+            _c("input", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.order_filter.vname,
+                  expression: "order_filter.vname"
+                }
+              ],
+              staticClass: "form-control ",
+              attrs: { type: "text", placeholder: "Venue" },
+              domProps: { value: _vm.order_filter.vname },
+              on: {
+                input: function($event) {
+                  if ($event.target.composing) {
+                    return
+                  }
+                  _vm.$set(_vm.order_filter, "vname", $event.target.value)
+                }
+              }
+            })
+          ]),
           _vm._v(" "),
-          _vm.data_exists
-            ? _c("b-table", {
-                staticClass: "bg-white col-12",
-                attrs: {
-                  hover: "",
-                  items: _vm.orders,
-                  "sticky-header": "",
-                  "sticky-header": "600px",
-                  bordered: "",
-                  striped: "",
-                  small: "",
-                  fields: _vm.orders_fields,
-                  "head-variant": "dark",
-                  outlined: "",
-                  filter: _vm.filter,
-                  filterIncludedFields: _vm.filterOn,
-                  selectable: "",
-                  "select-mode": "single",
-                  "selected-variant": "success",
-                  busy: _vm.orders_table_waiting
-                },
-                on: {
-                  "row-selected": _vm.onRowSelected,
-                  filtered: _vm.onFiltered
-                },
-                scopedSlots: _vm._u(
-                  [
-                    {
-                      key: "cell(#)",
-                      fn: function(data) {
-                        return [
-                          _vm._v(
-                            "\n                    " +
-                              _vm._s(data.index + 1) +
-                              "\n                "
-                          )
-                        ]
-                      }
+          _c("div", { staticClass: "col-12 col-md-3" }, [
+            _c("input", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.order_filter.asset_name,
+                  expression: "order_filter.asset_name"
+                }
+              ],
+              staticClass: "form-control",
+              attrs: { type: "text", placeholder: "Asset" },
+              domProps: { value: _vm.order_filter.asset_name },
+              on: {
+                input: function($event) {
+                  if ($event.target.composing) {
+                    return
+                  }
+                  _vm.$set(_vm.order_filter, "asset_name", $event.target.value)
+                }
+              }
+            })
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "col-12 col-md-3" }, [
+            _c("input", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.order_filter.order_id,
+                  expression: "order_filter.order_id"
+                }
+              ],
+              staticClass: "form-control",
+              attrs: { type: "text", placeholder: "Order Id" },
+              domProps: { value: _vm.order_filter.order_id },
+              on: {
+                input: function($event) {
+                  if ($event.target.composing) {
+                    return
+                  }
+                  _vm.$set(_vm.order_filter, "order_id", $event.target.value)
+                }
+              }
+            })
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "col-12 col-md-3" }, [
+            _c("input", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.order_filter.status,
+                  expression: "order_filter.status"
+                }
+              ],
+              staticClass: "form-control",
+              attrs: { type: "text", placeholder: "Order Status" },
+              domProps: { value: _vm.order_filter.status },
+              on: {
+                input: function($event) {
+                  if ($event.target.composing) {
+                    return
+                  }
+                  _vm.$set(_vm.order_filter, "status", $event.target.value)
+                }
+              }
+            })
+          ])
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "row d-none" }, [
+          _c("div", { staticClass: "col-12" }, [
+            _c("p", { domProps: { innerHTML: _vm._s(_vm.get_order_header) } })
+          ])
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "row mt-2" }, [
+          _c(
+            "div",
+            { staticClass: "col-12" },
+            [
+              _vm.data_exists
+                ? _c("b-table", {
+                    staticClass: "bg-white",
+                    attrs: {
+                      hover: "",
+                      items: _vm.order_filtered_items,
+                      "sticky-header": "",
+                      "sticky-header": "600px",
+                      bordered: "",
+                      striped: "",
+                      small: "",
+                      fields: _vm.orders_fields,
+                      "head-variant": "dark",
+                      outlined: "",
+                      filter: _vm.filter,
+                      filterIncludedFields: _vm.filterOn,
+                      selectable: "",
+                      "select-mode": "single",
+                      "selected-variant": "success",
+                      busy: _vm.orders_table_waiting
                     },
-                    {
-                      key: "table-busy",
-                      fn: function() {
-                        return [
-                          _c(
-                            "div",
-                            { staticClass: "text-center text-danger my-2" },
-                            [
-                              _c("b-spinner", { staticClass: "align-middle" }),
-                              _vm._v(" "),
-                              _c("strong", [_vm._v("Loading...")])
-                            ],
-                            1
-                          )
-                        ]
-                      },
-                      proxy: true
+                    on: {
+                      "row-selected": _vm.onRowSelected,
+                      filtered: _vm.onFiltered
                     },
-                    {
-                      key: "cell(Actions)",
-                      fn: function(row) {
-                        return [
-                          _c(
-                            "b-button",
-                            {
-                              staticClass: "mr-2",
-                              attrs: { size: "sm" },
-                              on: { click: row.toggleDetails }
-                            },
-                            [_vm._v("Actions")]
-                          )
-                        ]
-                      }
-                    },
-                    {
-                      key: "row-details",
-                      fn: function(row) {
-                        return [
-                          _c("div", { staticClass: "container" }, [
-                            _c("div", { staticClass: "row" }, [
+                    scopedSlots: _vm._u(
+                      [
+                        {
+                          key: "cell(parent_order)",
+                          fn: function(data) {
+                            return [
+                              _vm._v(
+                                "\n                            " +
+                                  _vm._s(
+                                    data.item.parent_order
+                                      ? "P(" + data.item.parent_order + ")"
+                                      : null
+                                  ) +
+                                  "\n                            " +
+                                  _vm._s(
+                                    data.item.has_child
+                                      ? "C(" + data.item.has_child + ")"
+                                      : null
+                                  ) +
+                                  "\n                        "
+                              )
+                            ]
+                          }
+                        },
+                        {
+                          key: "cell(#)",
+                          fn: function(data) {
+                            return [
+                              _vm._v(
+                                "\n                            " +
+                                  _vm._s(data.index + 1) +
+                                  "\n                        "
+                              )
+                            ]
+                          }
+                        },
+                        {
+                          key: "table-busy",
+                          fn: function() {
+                            return [
                               _c(
                                 "div",
-                                {
-                                  staticClass:
-                                    "col-12 col-md-10 bg-light p-3 rounded"
-                                },
+                                { staticClass: "text-center text-danger my-2" },
                                 [
-                                  _c(
-                                    "h3",
-                                    {
-                                      staticClass:
-                                        "text-center my-3 text-muted border-bottom pb-3"
-                                    },
-                                    [_vm._v("Detail information")]
-                                  ),
+                                  _c("b-spinner", {
+                                    staticClass: "align-middle"
+                                  }),
                                   _vm._v(" "),
-                                  _c("div", { staticClass: "row" }, [
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-right label_class"
-                                      },
-                                      [_vm._v("ID :")]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-left value_class"
-                                      },
-                                      [_vm._v(_vm._s(row.item.id))]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-right label_class"
-                                      },
-                                      [_vm._v("Full name :")]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-left value_class"
-                                      },
-                                      [_vm._v(_vm._s(row.item.full_name))]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-right label_class"
-                                      },
-                                      [_vm._v("Mobile :")]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-left value_class"
-                                      },
-                                      [_vm._v(_vm._s(row.item.mobile))]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-right label_class"
-                                      },
-                                      [_vm._v("Email :")]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-left value_class"
-                                      },
-                                      [_vm._v(_vm._s(row.item.email))]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-right label_class"
-                                      },
-                                      [_vm._v("Target Country :")]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-left value_class"
-                                      },
-                                      [_vm._v(_vm._s(row.item.country))]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-right label_class"
-                                      },
-                                      [_vm._v("Owner ID :")]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-left value_class"
-                                      },
-                                      [_vm._v(_vm._s(row.item.owner_id))]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-right label_class"
-                                      },
-                                      [_vm._v("Followup date :")]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-left value_class"
-                                      },
-                                      [_vm._v(_vm._s(row.item.date_followUp))]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-right label_class"
-                                      },
-                                      [_vm._v("Created at :")]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-left value_class"
-                                      },
-                                      [_vm._v(_vm._s(row.item.created_at))]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-right label_class"
-                                      },
-                                      [_vm._v("Updated at :")]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "col-6 text-left value_class"
-                                      },
-                                      [_vm._v(_vm._s(row.item.updated_at))]
-                                    )
-                                  ])
-                                ]
-                              ),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "col-10 col-md-2" }, [
-                                _c("div", { staticClass: "text-right" }, [
+                                  _c("strong", [_vm._v("Loading...")])
+                                ],
+                                1
+                              )
+                            ]
+                          },
+                          proxy: true
+                        },
+                        {
+                          key: "cell(Actions)",
+                          fn: function(row) {
+                            return [
+                              _c(
+                                "b-button",
+                                {
+                                  staticClass: "mr-2",
+                                  attrs: { size: "sm" },
+                                  on: { click: row.toggleDetails }
+                                },
+                                [_vm._v("Actions")]
+                              )
+                            ]
+                          }
+                        },
+                        {
+                          key: "row-details",
+                          fn: function(row) {
+                            return [
+                              _c("div", { staticClass: "container" }, [
+                                _c("div", { staticClass: "row" }, [
                                   _c(
                                     "div",
-                                    { staticClass: "col-12" },
+                                    { staticClass: "col-12 col-md-10 " },
                                     [
-                                      _c(
-                                        "b-button",
-                                        {
-                                          class: [
-                                            _vm.get_buttons_state(
-                                              "duty",
-                                              row.item
-                                            ),
-                                            "btn",
-                                            "btn-success",
-                                            "mt-3"
-                                          ],
-                                          staticStyle: { width: "140px" },
-                                          attrs: { size: "sm" },
-                                          on: {
-                                            click: function($event) {
-                                              return _vm.remove(
-                                                row.item,
-                                                row.index
-                                              )
-                                            }
-                                          }
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                            New duty\n                                        "
-                                          )
-                                        ]
-                                      )
-                                    ],
-                                    1
+                                      _c("div", { staticClass: "row" }, [
+                                        row.item.parent.length > 0
+                                          ? _c(
+                                              "div",
+                                              { staticClass: "col-12" },
+                                              [
+                                                _c(
+                                                  "div",
+                                                  { staticClass: "row" },
+                                                  _vm._l(
+                                                    row.item.parent,
+                                                    function(item, index) {
+                                                      return _c(
+                                                        "div",
+                                                        {
+                                                          staticClass:
+                                                            "col-12 col-md-6"
+                                                        },
+                                                        [
+                                                          _c(
+                                                            "div",
+                                                            {
+                                                              staticClass:
+                                                                "card mt-3"
+                                                            },
+                                                            [
+                                                              _c(
+                                                                "div",
+                                                                {
+                                                                  staticClass:
+                                                                    "card-header"
+                                                                },
+                                                                [
+                                                                  _c("h5", [
+                                                                    _vm._v(
+                                                                      "Base of " +
+                                                                        _vm._s(
+                                                                          item.vname
+                                                                        ) +
+                                                                        " Order"
+                                                                    )
+                                                                  ])
+                                                                ]
+                                                              ),
+                                                              _vm._v(" "),
+                                                              _c(
+                                                                "div",
+                                                                {
+                                                                  staticClass:
+                                                                    "card-body"
+                                                                },
+                                                                [
+                                                                  _c(
+                                                                    "div",
+                                                                    {
+                                                                      staticClass:
+                                                                        "card-text"
+                                                                    },
+                                                                    [
+                                                                      _c("ul", [
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Order ID:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.order_id
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Order detail ID:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.order_detail_id
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Asset count:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.asset_count
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Serial number:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.serial_no
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "User name:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.user_name
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Venue name:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.vname
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Asset name:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.asset_name
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Created at:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.order_detail_created_at
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        )
+                                                                      ])
+                                                                    ]
+                                                                  )
+                                                                ]
+                                                              )
+                                                            ]
+                                                          )
+                                                        ]
+                                                      )
+                                                    }
+                                                  ),
+                                                  0
+                                                )
+                                              ]
+                                            )
+                                          : _vm._e(),
+                                        _vm._v(" "),
+                                        row.item.children.length > 0
+                                          ? _c(
+                                              "div",
+                                              { staticClass: "col-12" },
+                                              [
+                                                _c(
+                                                  "div",
+                                                  { staticClass: "row" },
+                                                  _vm._l(
+                                                    row.item.children,
+                                                    function(item, index) {
+                                                      return _c(
+                                                        "div",
+                                                        {
+                                                          staticClass:
+                                                            "col-12 col-md-6"
+                                                        },
+                                                        [
+                                                          _c(
+                                                            "div",
+                                                            {
+                                                              staticClass:
+                                                                "card mt-3"
+                                                            },
+                                                            [
+                                                              _c(
+                                                                "div",
+                                                                {
+                                                                  staticClass:
+                                                                    "card-header"
+                                                                },
+                                                                [
+                                                                  _c("h5", [
+                                                                    _vm._v(
+                                                                      "\n                                                                    " +
+                                                                        _vm._s(
+                                                                          "Destination no." +
+                                                                            (index +
+                                                                              1) +
+                                                                            "-" +
+                                                                            item.vname
+                                                                        ) +
+                                                                        "\n                                                                "
+                                                                    )
+                                                                  ])
+                                                                ]
+                                                              ),
+                                                              _vm._v(" "),
+                                                              _c(
+                                                                "div",
+                                                                {
+                                                                  staticClass:
+                                                                    "card-body"
+                                                                },
+                                                                [
+                                                                  _c(
+                                                                    "div",
+                                                                    {
+                                                                      staticClass:
+                                                                        "card-text"
+                                                                    },
+                                                                    [
+                                                                      _c("ul", [
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Order ID:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.order_id
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Order Detail ID:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.order_detail_id
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Asset Count:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.asset_count
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Serial Number:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.serial_no
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "User Name:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.user_name
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Venue Name:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.vname
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Asset Name:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.asset_name
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Received date:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.received
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        ),
+                                                                        _vm._v(
+                                                                          " "
+                                                                        ),
+                                                                        _c(
+                                                                          "li",
+                                                                          [
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  "Created At.:"
+                                                                                )
+                                                                              ]
+                                                                            ),
+                                                                            _vm._v(
+                                                                              " "
+                                                                            ),
+                                                                            _c(
+                                                                              "span",
+                                                                              [
+                                                                                _vm._v(
+                                                                                  _vm._s(
+                                                                                    item.order_detail_created_at
+                                                                                  )
+                                                                                )
+                                                                              ]
+                                                                            )
+                                                                          ]
+                                                                        )
+                                                                      ]),
+                                                                      _vm._v(
+                                                                        " "
+                                                                      ),
+                                                                      item.status ===
+                                                                        4 &&
+                                                                      !item.received
+                                                                        ? _c(
+                                                                            "button",
+                                                                            {
+                                                                              staticClass:
+                                                                                "btn btn-success ml-auto d-flex",
+                                                                              on: {
+                                                                                click: function(
+                                                                                  $event
+                                                                                ) {
+                                                                                  return _vm.order_received(
+                                                                                    item.order_detail_id
+                                                                                  )
+                                                                                }
+                                                                              }
+                                                                            },
+                                                                            [
+                                                                              _vm._v(
+                                                                                "\n                                                                        Received\n                                                                    "
+                                                                              )
+                                                                            ]
+                                                                          )
+                                                                        : !item.received
+                                                                        ? _c(
+                                                                            "div",
+                                                                            {
+                                                                              staticClass:
+                                                                                "text-danger text-center font-weight-bold"
+                                                                            },
+                                                                            [
+                                                                              _vm._v(
+                                                                                "\n                                                                        Pending....\n                                                                    "
+                                                                              )
+                                                                            ]
+                                                                          )
+                                                                        : _vm._e()
+                                                                    ]
+                                                                  )
+                                                                ]
+                                                              )
+                                                            ]
+                                                          )
+                                                        ]
+                                                      )
+                                                    }
+                                                  ),
+                                                  0
+                                                )
+                                              ]
+                                            )
+                                          : _vm._e()
+                                      ])
+                                    ]
                                   ),
                                   _vm._v(" "),
                                   _c(
                                     "div",
-                                    { staticClass: "col-12" },
+                                    { staticClass: "col-12 col-md-2" },
                                     [
-                                      _c(
-                                        "b-button",
-                                        {
-                                          class: [
-                                            _vm.get_buttons_state(
-                                              "pack",
-                                              row.item
-                                            ),
-                                            "btn",
-                                            "btn-warning",
-                                            "mt-3"
+                                      _c("div", { staticClass: "text-right" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "col-12" },
+                                          [
+                                            _c(
+                                              "b-button",
+                                              {
+                                                class: [
+                                                  _vm.get_buttons_state(
+                                                    "duty",
+                                                    row.item
+                                                  ),
+                                                  "btn",
+                                                  "btn-success",
+                                                  "mt-3"
+                                                ],
+                                                staticStyle: { width: "140px" },
+                                                attrs: { size: "sm" },
+                                                on: {
+                                                  click: function($event) {
+                                                    return _vm.get_duty(
+                                                      row.item,
+                                                      row.index
+                                                    )
+                                                  }
+                                                }
+                                              },
+                                              [
+                                                _vm._v(
+                                                  "\n                                                    New duty\n                                                "
+                                                )
+                                              ]
+                                            )
                                           ],
-                                          staticStyle: { width: "140px" },
-                                          attrs: { size: "sm" },
-                                          on: {
-                                            click: function($event) {
-                                              return _vm.remove(
-                                                row.item,
-                                                row.index
-                                              )
-                                            }
-                                          }
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                            Packaging\n                                        "
-                                          )
-                                        ]
-                                      )
-                                    ],
-                                    1
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "div",
-                                    { staticClass: "col-12" },
-                                    [
-                                      _c(
-                                        "b-button",
-                                        {
-                                          class: [
-                                            _vm.get_buttons_state(
-                                              "sent",
-                                              row.item
-                                            ),
-                                            "btn",
-                                            "btn-info",
-                                            "mt-3"
+                                          1
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "div",
+                                          { staticClass: "col-12" },
+                                          [
+                                            _c(
+                                              "b-button",
+                                              {
+                                                class: [
+                                                  _vm.get_buttons_state(
+                                                    "packaging",
+                                                    row.item
+                                                  ),
+                                                  "btn",
+                                                  "btn-warning",
+                                                  "mt-3"
+                                                ],
+                                                staticStyle: { width: "140px" },
+                                                attrs: { size: "sm" },
+                                                on: {
+                                                  click: function($event) {
+                                                    return _vm.packaging(
+                                                      row.item,
+                                                      row.index
+                                                    )
+                                                  }
+                                                }
+                                              },
+                                              [
+                                                _vm._v(
+                                                  "\n                                                    Packaging\n                                                "
+                                                )
+                                              ]
+                                            )
                                           ],
-                                          staticStyle: { width: "140px" },
-                                          attrs: { size: "sm" },
-                                          on: {
-                                            click: function($event) {
-                                              return _vm.remove(
-                                                row.item,
-                                                row.index
-                                              )
-                                            }
-                                          }
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                            Sent items\n                                        "
-                                          )
-                                        ]
-                                      )
-                                    ],
-                                    1
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "div",
-                                    { staticClass: "col-12" },
-                                    [
-                                      _c(
-                                        "b-button",
-                                        {
-                                          class: [
-                                            _vm.get_buttons_state(
-                                              "received",
-                                              row.item
-                                            ),
-                                            "btn",
-                                            "btn-success",
-                                            "mt-3"
+                                          1
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "div",
+                                          { staticClass: "col-12" },
+                                          [
+                                            _c(
+                                              "b-button",
+                                              {
+                                                class: [
+                                                  _vm.get_buttons_state(
+                                                    "sent",
+                                                    row.item
+                                                  ),
+                                                  "btn",
+                                                  "btn-info",
+                                                  "mt-3"
+                                                ],
+                                                staticStyle: { width: "140px" },
+                                                attrs: { size: "sm" },
+                                                on: {
+                                                  click: function($event) {
+                                                    return _vm.sent(
+                                                      row.item,
+                                                      row.index
+                                                    )
+                                                  }
+                                                }
+                                              },
+                                              [
+                                                _vm._v(
+                                                  "\n                                                    Sent items\n                                                "
+                                                )
+                                              ]
+                                            )
                                           ],
-                                          staticStyle: { width: "140px" },
-                                          attrs: { size: "sm" },
-                                          on: {
-                                            click: function($event) {
-                                              return _vm.remove(
-                                                row.item,
-                                                row.index
-                                              )
-                                            }
-                                          }
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                            Asset received\n                                        "
-                                          )
-                                        ]
-                                      )
-                                    ],
-                                    1
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "div",
-                                    { staticClass: "col-12" },
-                                    [
-                                      _c(
-                                        "b-button",
-                                        {
-                                          class: [
-                                            _vm.get_buttons_state(
-                                              "reject",
-                                              row.item
-                                            ),
-                                            "btn",
-                                            "btn-danger",
-                                            "mt-3"
+                                          1
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "div",
+                                          { staticClass: "col-12" },
+                                          [
+                                            _c(
+                                              "b-button",
+                                              {
+                                                class: [
+                                                  _vm.get_buttons_state(
+                                                    "received",
+                                                    row.item
+                                                  ),
+                                                  "btn",
+                                                  "btn-success",
+                                                  "mt-3"
+                                                ],
+                                                staticStyle: { width: "140px" },
+                                                attrs: { size: "sm" },
+                                                on: {
+                                                  click: function($event) {
+                                                    return _vm.receive_order(
+                                                      row.item,
+                                                      row.index
+                                                    )
+                                                  }
+                                                }
+                                              },
+                                              [
+                                                _vm._v(
+                                                  "\n                                                    Asset received\n                                                "
+                                                )
+                                              ]
+                                            )
                                           ],
-                                          staticStyle: { width: "140px" },
-                                          attrs: { size: "sm" },
-                                          on: {
-                                            click: function($event) {
-                                              return _vm.remove(
-                                                row.item,
-                                                row.index
-                                              )
-                                            }
-                                          }
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                            Reject\n                                        "
-                                          )
-                                        ]
-                                      )
-                                    ],
-                                    1
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "div",
-                                    { staticClass: "col-12" },
-                                    [
-                                      _c(
-                                        "b-button",
-                                        {
-                                          class: [
-                                            _vm.get_buttons_state(
-                                              "edit",
-                                              row.item
-                                            ),
-                                            "btn",
-                                            "btn-primary",
-                                            "mt-3"
+                                          1
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "div",
+                                          { staticClass: "col-12" },
+                                          [
+                                            _c(
+                                              "b-button",
+                                              {
+                                                class: [
+                                                  _vm.get_buttons_state(
+                                                    "reject",
+                                                    row.item
+                                                  ),
+                                                  "btn",
+                                                  "btn-danger",
+                                                  "mt-3"
+                                                ],
+                                                staticStyle: { width: "140px" },
+                                                attrs: { size: "sm" },
+                                                on: {
+                                                  click: function($event) {
+                                                    return _vm.reject_order(
+                                                      row.item,
+                                                      row.index
+                                                    )
+                                                  }
+                                                }
+                                              },
+                                              [
+                                                _vm._v(
+                                                  "\n                                                    Reject\n                                                "
+                                                )
+                                              ]
+                                            )
                                           ],
-                                          staticStyle: { width: "140px" },
-                                          attrs: { size: "sm" },
-                                          on: {
-                                            click: function($event) {
-                                              return _vm.openModal(
-                                                $event.target,
-                                                "u",
-                                                row.item,
-                                                row.index
-                                              )
-                                            }
-                                          }
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                            Edit order\n                                        "
-                                          )
-                                        ]
-                                      )
-                                    ],
-                                    1
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "div",
-                                    { staticClass: "col-12" },
-                                    [
-                                      _c(
-                                        "b-button",
-                                        {
-                                          class: [
-                                            _vm.get_buttons_state(
-                                              "remove",
-                                              row.item
-                                            ),
-                                            "my-3",
-                                            "btn",
-                                            "btn-danger"
+                                          1
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "div",
+                                          { staticClass: "col-12" },
+                                          [
+                                            _c(
+                                              "b-button",
+                                              {
+                                                class: [
+                                                  _vm.get_buttons_state(
+                                                    "edit",
+                                                    row.item
+                                                  ),
+                                                  "btn",
+                                                  "btn-primary",
+                                                  "mt-3"
+                                                ],
+                                                staticStyle: { width: "140px" },
+                                                attrs: { size: "sm" },
+                                                on: {
+                                                  click: function($event) {
+                                                    return _vm.openModal(
+                                                      $event.target,
+                                                      "u",
+                                                      row.item,
+                                                      row.index
+                                                    )
+                                                  }
+                                                }
+                                              },
+                                              [
+                                                _vm._v(
+                                                  "\n                                                    Edit order\n                                                "
+                                                )
+                                              ]
+                                            )
                                           ],
-                                          staticStyle: { width: "140px" },
-                                          attrs: { size: "sm" },
-                                          on: {
-                                            click: function($event) {
-                                              return _vm.remove(
-                                                row.item,
-                                                row.index
-                                              )
-                                            }
-                                          }
-                                        },
-                                        [
-                                          _vm._v(
-                                            "\n                                            Remove order\n                                        "
-                                          )
-                                        ]
-                                      )
-                                    ],
-                                    1
+                                          1
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "div",
+                                          { staticClass: "col-12" },
+                                          [
+                                            _c(
+                                              "b-button",
+                                              {
+                                                class: [
+                                                  _vm.get_buttons_state(
+                                                    "delete",
+                                                    row.item
+                                                  ),
+                                                  "btn",
+                                                  "btn-primary",
+                                                  "mt-3"
+                                                ],
+                                                staticStyle: { width: "140px" },
+                                                attrs: { size: "sm" },
+                                                on: {
+                                                  click: function($event) {
+                                                    return _vm.delete_order(
+                                                      row.item,
+                                                      row.index
+                                                    )
+                                                  }
+                                                }
+                                              },
+                                              [
+                                                _vm._v(
+                                                  "\n                                                    Delete order\n                                                "
+                                                )
+                                              ]
+                                            )
+                                          ],
+                                          1
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "div",
+                                          { staticClass: "col-12" },
+                                          [
+                                            _c(
+                                              "b-button",
+                                              {
+                                                class: [
+                                                  _vm.get_buttons_state(
+                                                    "remove",
+                                                    row.item
+                                                  ),
+                                                  "my-3",
+                                                  "btn",
+                                                  "btn-danger"
+                                                ],
+                                                staticStyle: { width: "140px" },
+                                                attrs: { size: "sm" },
+                                                on: {
+                                                  click: function($event) {
+                                                    return _vm.remove(
+                                                      row.item,
+                                                      row.index
+                                                    )
+                                                  }
+                                                }
+                                              },
+                                              [
+                                                _vm._v(
+                                                  "\n                                                    Remove order\n                                                "
+                                                )
+                                              ]
+                                            )
+                                          ],
+                                          1
+                                        )
+                                      ])
+                                    ]
                                   )
                                 ])
                               ])
-                            ])
-                          ])
-                        ]
-                      }
-                    }
-                  ],
-                  null,
-                  false,
-                  2577163796
-                )
-              })
-            : _vm._e(),
-          _vm._v(" "),
+                            ]
+                          }
+                        }
+                      ],
+                      null,
+                      false,
+                      3618604016
+                    )
+                  })
+                : _vm._e()
+            ],
+            1
+          )
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "row" }, [
           _c("div", { staticClass: "col-12 text-center" }, [
             _c(
               "button",
@@ -28342,12 +29526,21 @@ var render = function() {
                   }
                 }
               },
-              [_vm._v("Add new order\n                ")]
+              [_vm._v("Add new order\n                    ")]
+            ),
+            _vm._v(" "),
+            _c(
+              "button",
+              {
+                class: ["btn", "btn-warning"],
+                staticStyle: { width: "140px" },
+                on: { click: _vm.reload_order }
+              },
+              [_vm._v("Data reload\n                    ")]
             )
           ])
-        ],
-        1
-      )
+        ])
+      ])
     ]),
     _vm._v(" "),
     _c(
@@ -28377,60 +29570,62 @@ var render = function() {
               [
                 _c(
                   "div",
-                  { staticClass: "form-row d-none" },
+                  { class: ["d-none"] },
                   [
-                    _c("b-form-select", {
-                      staticClass: "mb-3",
-                      attrs: {
-                        options: _vm.venues,
-                        "value-field": "id",
-                        "text-field": "vname"
-                      },
-                      model: {
-                        value: _vm.order_form.venue_id,
-                        callback: function($$v) {
-                          _vm.$set(_vm.order_form, "venue_id", $$v)
-                        },
-                        expression: "order_form.venue_id"
-                      }
-                    })
+                    _c(
+                      "b-form-group",
+                      { attrs: { label: "Venues:" } },
+                      [
+                        _c("b-form-select", {
+                          attrs: {
+                            options: _vm.venues,
+                            "value-field": "venue_id",
+                            "text-field": "vname"
+                          },
+                          model: {
+                            value: _vm.order_form.venue_id,
+                            callback: function($$v) {
+                              _vm.$set(_vm.order_form, "venue_id", $$v)
+                            },
+                            expression: "order_form.venue_id"
+                          }
+                        })
+                      ],
+                      1
+                    )
                   ],
                   1
                 ),
                 _vm._v(" "),
-                _c("div", { staticClass: "form-row" }, [
-                  _c("div", { staticClass: "form-group col-12" }, [
-                    _c("label", { attrs: { for: "asset_id" } }, [
-                      _vm._v("Asset:")
-                    ]),
-                    _vm._v(" "),
-                    _c("input", {
-                      directives: [
-                        {
-                          name: "model",
-                          rawName: "v-model",
-                          value: _vm.order_form.asset_id,
-                          expression: "order_form.asset_id"
-                        }
-                      ],
-                      staticClass: "form-control",
-                      attrs: { type: "text", id: "asset_id" },
-                      domProps: { value: _vm.order_form.asset_id },
-                      on: {
-                        input: function($event) {
-                          if ($event.target.composing) {
-                            return
+                _c(
+                  "div",
+                  { class: [_vm.save_type === "i" ? null : "d-none"] },
+                  [
+                    _c(
+                      "b-form-group",
+                      { attrs: { label: "Asset:" } },
+                      [
+                        _c("b-form-select", {
+                          attrs: {
+                            required: "",
+                            options: _vm.assets,
+                            "value-field": "id",
+                            "text-field": "asset_name"
+                          },
+                          model: {
+                            value: _vm.order_form.asset_id,
+                            callback: function($$v) {
+                              _vm.$set(_vm.order_form, "asset_id", $$v)
+                            },
+                            expression: "order_form.asset_id"
                           }
-                          _vm.$set(
-                            _vm.order_form,
-                            "asset_id",
-                            $event.target.value
-                          )
-                        }
-                      }
-                    })
-                  ])
-                ]),
+                        })
+                      ],
+                      1
+                    )
+                  ],
+                  1
+                ),
                 _vm._v(" "),
                 _c("div", { staticClass: "form-row" }, [
                   _c("div", { staticClass: "form-group col-12" }, [
@@ -28448,7 +29643,13 @@ var render = function() {
                         }
                       ],
                       staticClass: "form-control",
-                      attrs: { type: "number", id: "turn_over_asset_count" },
+                      attrs: {
+                        type: "number",
+                        required: "",
+                        min: "1",
+                        max: "1000",
+                        id: "turn_over_asset_count"
+                      },
                       domProps: { value: _vm.order_form.asset_count },
                       on: {
                         input: function($event) {
@@ -28466,7 +29667,41 @@ var render = function() {
                   ])
                 ]),
                 _vm._v(" "),
-                _c("div", { staticClass: "form-row" }, [
+                _c("div", { staticClass: "form-row d-none" }, [
+                  _c("div", { staticClass: "form-group col-12" }, [
+                    _c("label", { attrs: { for: "turn_over_serial_no" } }, [
+                      _vm._v("Serial number:")
+                    ]),
+                    _vm._v(" "),
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.order_form.serial_no,
+                          expression: "order_form.serial_no"
+                        }
+                      ],
+                      staticClass: "form-control",
+                      attrs: { type: "text", id: "turn_over_serial_no" },
+                      domProps: { value: _vm.order_form.serial_no },
+                      on: {
+                        input: function($event) {
+                          if ($event.target.composing) {
+                            return
+                          }
+                          _vm.$set(
+                            _vm.order_form,
+                            "serial_no",
+                            $event.target.value
+                          )
+                        }
+                      }
+                    })
+                  ])
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "form-row d-none" }, [
                   _c("div", { staticClass: "form-group col-12" }, [
                     _c("label", { attrs: { for: "turn_over_descp" } }, [
                       _vm._v("Description :")
@@ -28490,6 +29725,141 @@ var render = function() {
                             return
                           }
                           _vm.$set(_vm.order_form, "descp", $event.target.value)
+                        }
+                      }
+                    })
+                  ])
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "row" }, [
+                  _c("div", { staticClass: "col-12 text-right" }, [
+                    _c("button", { staticClass: "btn btn-success w-25" }, [
+                      _vm._v("Save")
+                    ])
+                  ])
+                ])
+              ]
+            )
+          ]
+        ),
+        _vm._v(" "),
+        _c(
+          "b-modal",
+          {
+            attrs: {
+              id: "duty_modal",
+              title: "Duty form",
+              "hide-footer": "",
+              size: "md"
+            }
+          },
+          [
+            _c(
+              "div",
+              {
+                class: [
+                  _vm.form_errors.length ? null : "d-none",
+                  "alert",
+                  "alert-danger"
+                ]
+              },
+              [
+                _c("p", [_vm._v("You have an error : ")]),
+                _vm._v(" "),
+                _c(
+                  "ul",
+                  _vm._l(_vm.form_errors, function(item) {
+                    return _c("li", [_vm._v(_vm._s(item))])
+                  }),
+                  0
+                )
+              ]
+            ),
+            _vm._v(" "),
+            _c(
+              "form",
+              {
+                on: {
+                  submit: function($event) {
+                    $event.preventDefault()
+                    return _vm.save_duty($event)
+                  }
+                }
+              },
+              [
+                _c("div", { staticClass: "form-row" }, [
+                  _c("div", { staticClass: "form-group col-12" }, [
+                    _c("label", { attrs: { for: "duty_form_asset_name" } }, [
+                      _vm._v("Selected asset:")
+                    ]),
+                    _vm._v(" "),
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.duty_form.asset_name,
+                          expression: "duty_form.asset_name"
+                        }
+                      ],
+                      staticClass: "form-control",
+                      attrs: {
+                        type: "text",
+                        disabled: "",
+                        readonly: "",
+                        id: "duty_form_asset_name"
+                      },
+                      domProps: { value: _vm.duty_form.asset_name },
+                      on: {
+                        input: function($event) {
+                          if ($event.target.composing) {
+                            return
+                          }
+                          _vm.$set(
+                            _vm.duty_form,
+                            "asset_name",
+                            $event.target.value
+                          )
+                        }
+                      }
+                    })
+                  ])
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "form-row" }, [
+                  _c("div", { staticClass: "form-group col-12" }, [
+                    _c("label", { attrs: { for: "duty_form_asset_count" } }, [
+                      _vm._v("Asset count:")
+                    ]),
+                    _vm._v(" "),
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.duty_form.asset_count,
+                          expression: "duty_form.asset_count"
+                        }
+                      ],
+                      staticClass: "form-control",
+                      attrs: {
+                        type: "number",
+                        min: "1",
+                        max: _vm.get_max_asset_venue,
+                        required: "",
+                        id: "duty_form_asset_count"
+                      },
+                      domProps: { value: _vm.duty_form.asset_count },
+                      on: {
+                        input: function($event) {
+                          if ($event.target.composing) {
+                            return
+                          }
+                          _vm.$set(
+                            _vm.duty_form,
+                            "asset_count",
+                            $event.target.value
+                          )
                         }
                       }
                     })
@@ -28757,42 +30127,44 @@ var render = function() {
               _c(
                 "b-navbar-nav",
                 [
-                  _c(
-                    "b-nav-item-dropdown",
-                    { attrs: { text: "Data" } },
-                    [
-                      _c(
-                        "b-dropdown-item",
-                        { attrs: { to: { name: "users" } } },
-                        [_vm._v("Users")]
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-dropdown-item",
-                        { attrs: { to: { name: "groups" } } },
-                        [_vm._v("Groups")]
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-dropdown-item",
-                        { attrs: { to: { name: "assets" } } },
-                        [_vm._v("Assets")]
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-dropdown-item",
-                        { attrs: { to: { name: "venues" } } },
-                        [_vm._v("Venues")]
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-dropdown-item",
-                        { attrs: { to: { name: "cities" } } },
-                        [_vm._v("Cities")]
+                  _vm.user_access.view_menu_data
+                    ? _c(
+                        "b-nav-item-dropdown",
+                        { attrs: { text: "Data" } },
+                        [
+                          _c(
+                            "b-dropdown-item",
+                            { attrs: { to: { name: "users" } } },
+                            [_vm._v("Users")]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "b-dropdown-item",
+                            { attrs: { to: { name: "groups" } } },
+                            [_vm._v("Groups")]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "b-dropdown-item",
+                            { attrs: { to: { name: "assets" } } },
+                            [_vm._v("Assets")]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "b-dropdown-item",
+                            { attrs: { to: { name: "venues" } } },
+                            [_vm._v("Venues")]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "b-dropdown-item",
+                            { attrs: { to: { name: "cities" } } },
+                            [_vm._v("Cities")]
+                          )
+                        ],
+                        1
                       )
-                    ],
-                    1
-                  )
+                    : _vm._e()
                 ],
                 1
               ),
@@ -30036,47 +31408,51 @@ var render = function() {
                       key: "cell(Actions)",
                       fn: function(row) {
                         return [
-                          _c(
-                            "b-button",
-                            {
-                              staticClass: "btn btn-primary mr-2",
-                              staticStyle: { width: "70px" },
-                              attrs: { size: "sm" },
-                              on: {
-                                click: function($event) {
-                                  return _vm.openModal(
-                                    $event.target,
-                                    "u",
-                                    row.item,
-                                    row.index
-                                  )
-                                }
-                              }
-                            },
-                            [_vm._v("Edit\n                    ")]
-                          ),
+                          row.item.rec_type === "init"
+                            ? _c(
+                                "b-button",
+                                {
+                                  staticClass: "btn btn-primary mr-2",
+                                  staticStyle: { width: "70px" },
+                                  attrs: { size: "sm" },
+                                  on: {
+                                    click: function($event) {
+                                      return _vm.openModal(
+                                        $event.target,
+                                        "u",
+                                        row.item,
+                                        row.index
+                                      )
+                                    }
+                                  }
+                                },
+                                [_vm._v("Edit\n                    ")]
+                              )
+                            : _vm._e(),
                           _vm._v(" "),
-                          _c(
-                            "b-button",
-                            {
-                              staticClass: "btn btn-danger mr-2",
-                              staticStyle: { width: "70px" },
-                              attrs: { size: "sm" },
-                              on: {
-                                click: function($event) {
-                                  return _vm.remove(row.item, row.index)
-                                }
-                              }
-                            },
-                            [_vm._v("Remove\n                    ")]
-                          )
+                          row.item.rec_type === "init"
+                            ? _c(
+                                "b-button",
+                                {
+                                  staticClass: "btn btn-danger mr-2",
+                                  staticStyle: { width: "70px" },
+                                  attrs: { size: "sm" },
+                                  on: {
+                                    click: function($event) {
+                                      return _vm.remove(row.item, row.index)
+                                    }
+                                  }
+                                },
+                                [_vm._v("Remove\n                    ")]
+                              )
+                            : _vm._e()
                         ]
                       }
                     }
                   ],
                   null,
                   false,
-                  1423269137
+                  3879935825
                 )
               })
             : _vm._e(),
@@ -30140,6 +31516,7 @@ var render = function() {
                       [
                         _c("b-form-select", {
                           attrs: {
+                            required: "",
                             options: _vm.venues,
                             "value-field": "venue_id",
                             "text-field": "vname"
@@ -30169,6 +31546,7 @@ var render = function() {
                       [
                         _c("b-form-select", {
                           attrs: {
+                            required: "",
                             options: _vm.assets,
                             "value-field": "id",
                             "text-field": "asset_name"
@@ -30204,7 +31582,13 @@ var render = function() {
                         }
                       ],
                       staticClass: "form-control",
-                      attrs: { type: "number", id: "turn_over_asset_count" },
+                      attrs: {
+                        type: "number",
+                        required: "",
+                        min: "=0",
+                        max: "10000",
+                        id: "turn_over_asset_count"
+                      },
                       domProps: { value: _vm.form.asset_count },
                       on: {
                         input: function($event) {
@@ -30234,7 +31618,11 @@ var render = function() {
                         }
                       ],
                       staticClass: "form-control",
-                      attrs: { type: "text", id: "turn_over_serial_no" },
+                      attrs: {
+                        type: "text",
+                        required: "",
+                        id: "turn_over_serial_no"
+                      },
                       domProps: { value: _vm.form.serial_no },
                       on: {
                         input: function($event) {
@@ -30327,12 +31715,7 @@ var render = function() {
   var _c = _vm._self._c || _h
   return _c("div", { staticClass: "container-fluid my-3" }, [
     _c("div", { staticClass: "row" }, [
-      _c(
-        "div",
-        { staticClass: "col-2" },
-        [_c("venues", { on: { on_select_venue: _vm.get_venue_assets } })],
-        1
-      ),
+      _c("div", { staticClass: "col-2" }, [_c("venues")], 1),
       _vm._v(" "),
       _c(
         "div",

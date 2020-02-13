@@ -2,7 +2,7 @@
     <div class="container-fluid my-3" style="">
         <div class="row">
             <div class="col-2">
-                <venues @on_select_venue="get_venue_assets"/>
+                <venues/>
             </div>
             <div class="col-4">
                 <venue_assets @on_asset_select="show_turn_over"
@@ -53,7 +53,7 @@
                     // this.venue_assets_table_waiting = false;
                     this.venue_assets_table_waiting = false;
                     this.venue_assets_data = res.data;
-                    this.makeToast(res.data.length + ' Warehouse inventory load successfully', 'success');
+                    // this.makeToast(res.data.length + ' Warehouse inventory load successfully', 'success');
                 }).catch(res => {
                     console.log('get_users', res);
                     this.makeToast('Warehouse inventory loading failed', 'danger');
@@ -65,9 +65,9 @@
             },
         },
         created() {
-            // bus.$on('on_change_venue', (data) => {
-            // console.log(data);
-            // });
+            bus.$on('on_change_venue', (data) => {
+                this.get_venue_assets(data);
+            });
         },
     }
 </script>

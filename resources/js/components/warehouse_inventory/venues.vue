@@ -44,6 +44,9 @@
             },
         },
         created: function () {
+            bus.$on('on_change_turn_over', () => {
+                bus.$emit('on_change_venue', this.selected_venue);
+            });
             this.venues_waiting = true;
             axios({
                 url: '/api/get_venues',
@@ -52,18 +55,19 @@
             }).then(res => {
                 // console.log(res.data);
                 this.venues = res.data;
-                this.makeToast(res.data.length + ' Venues load successfully', 'success');
+                // this.makeToast(res.data.length + ' Venues load successfully', 'success');
                 this.venues_waiting = false;
             }).catch(res => {
                 console.log('get_users', res);
                 this.makeToast('Venues loading failed', 'danger');
                 this.venues_waiting = false;
             });
+
         },
         watch: {
             selected_venue: function (val) {
-                this.$emit('on_select_venue', val);
-                bus.$emit('on_change_venue', val);
+                // this.$emit('on_select_venue', this.selected_venue);
+                bus.$emit('on_change_venue', this.selected_venue);
             }
         },
     }

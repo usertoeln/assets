@@ -15,13 +15,12 @@
                     <div class="col-12 col-md-4">
                         <input v-model="mojodi_filter.brand" type="text" placeholder="brand" class="form-control">
                     </div>
-
                 </div>
                 <div class="row mt-2">
                     <div class="col-12">
                         <b-table hover :items="filtered_items" class="bg-white rounded"
                                  sticky-header sticky-header="600px" bordered striped small
-                                 :fields="mojodi_fields"  foot-clone no-border-collapse
+                                 :fields="mojodi_fields" foot-clone no-border-collapse
                                  head-variant="dark"
                                  @row-selected="onRowSelected"
                                  outlined
@@ -46,6 +45,8 @@
 </template>
 
 <script>
+    import bus from '../../event_bus';
+
     export default {
         /************************/
         name: "venues",
@@ -83,6 +84,7 @@
                 })
             },
             onRowSelected(item) {
+                bus.$emit('on_venue_select', item);
             },
             onFiltered(filteredItems) {
                 this.totalRows = filteredItems.length;
@@ -144,6 +146,9 @@
         /************************/
         created: function () {
             this.filtered_items = this.mojodi;
+            bus.$on('on_order_selected', val => {
+                this.mojodi_filter.asset_name = (val.length) ? val[0].asset_name : '';
+            });
         },
         /************************/
         /************************/

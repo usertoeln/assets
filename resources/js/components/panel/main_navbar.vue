@@ -8,7 +8,7 @@
 
             <b-collapse id="nav-collapse" is-nav>
                 <b-navbar-nav>
-                    <b-nav-item-dropdown text="Data">
+                    <b-nav-item-dropdown text="Data" v-if="user_access.view_menu_data">
                         <b-dropdown-item :to="{ name : 'users' }">Users</b-dropdown-item>
                         <b-dropdown-item :to="{ name : 'groups' }">Groups</b-dropdown-item>
                         <b-dropdown-item :to="{ name : 'assets' }">Assets</b-dropdown-item>
@@ -42,12 +42,20 @@
 
 <script>
     import axios from 'axios';
+    import bus from '../../event_bus';
 
     export default {
         name: "main_navbar",
         data() {
             return {
                 user: '',
+                user_access: {
+                    view_menu_order_management: false,
+                    view_menu_warehouse_inventory: false,
+                    view_menu_operations: false,
+                    view_menu_data: false,
+                    order_access: [],
+                },
             }
         },
         methods: {
@@ -59,12 +67,24 @@
                     console.log(response);
                 });
             },
+            get_user_access() {
+                axios.get('/api/get_user_access')
+                    .then(response => {
+                        this.user_access = response.data;
+                        bus.$emit('get_user_access', response.data);
+                        // console.log('main_navbar get_user_access bus.emit', response.data);
+                    }).catch(response => {
+                    console.log(response);
+                });
+            },
+        },
+        mounted() {
         },
         created() {
             axios.get('/api/user')
                 .then(response => {
                     this.user = response.data;
-                    // console.log(response);
+                    this.get_user_access();
                 }).catch(response => {
                 this.user = null;
                 console.log(response);
